@@ -24,12 +24,20 @@ void MTA_Client_SS::handleMessage(cMessage *msg) {
     if (msg->getKind() == PUSH_REQUEST) {
         auto *q = mk("DNS_QUERY", DNS_QUERY, addr, dnsAddr);
         q->addPar("qname").setStringValue(serverQName);
-        if (msg->hasPar("content")) q->addPar("content").setStringValue(msg->par("content").stdstringValue().c_str());
+        if (msg->hasPar("content")) q->addPar("content").setStringValue(msg->par("content").stringValue());
+        if (msg->hasPar("mail_from")) q->addPar("mail_from").setStringValue(msg->par("mail_from").stringValue());
+        if (msg->hasPar("mail_to")) q->addPar("mail_to").setStringValue(msg->par("mail_to").stringValue());
+        if (msg->hasPar("mail_subject")) q->addPar("mail_subject").setStringValue(msg->par("mail_subject").stringValue());
+        if (msg->hasPar("mail_body")) q->addPar("mail_body").setStringValue(msg->par("mail_body").stringValue());
         send(q, "ppp$o", 1); // to router
     } else if (msg->getKind() == DNS_RESPONSE) {
         long rsAddr = msg->par("answer").longValue();
         auto *smtp = mk("SMTP_SEND", SMTP_SEND, addr, rsAddr);
-        if (msg->hasPar("content")) smtp->addPar("content").setStringValue(msg->par("content").stdstringValue().c_str());
+        if (msg->hasPar("content")) smtp->addPar("content").setStringValue(msg->par("content").stringValue());
+        if (msg->hasPar("mail_from")) smtp->addPar("mail_from").setStringValue(msg->par("mail_from").stringValue());
+        if (msg->hasPar("mail_to")) smtp->addPar("mail_to").setStringValue(msg->par("mail_to").stringValue());
+        if (msg->hasPar("mail_subject")) smtp->addPar("mail_subject").setStringValue(msg->par("mail_subject").stringValue());
+        if (msg->hasPar("mail_body")) smtp->addPar("mail_body").setStringValue(msg->par("mail_body").stringValue());
         send(smtp, "ppp$o", 1);
     }
     delete msg;

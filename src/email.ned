@@ -98,6 +98,10 @@ simple Sender
     parameters:
         int address;
         string message = default("Hello from Sender");
+        string mail_from = default("alice@example.com");
+        string mail_to = default("bob@example.com");
+        string mail_subject = default("Greetings");
+        string mail_body = default("This is the body.");
     @display("i=device/laptop,,0");
     gates:
         inout ppp;

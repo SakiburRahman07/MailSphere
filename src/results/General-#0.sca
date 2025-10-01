@@ -1,8 +1,8 @@
 version 3
-run General-0-20251001-17:39:11-27260
+run General-0-20251001-17:55:03-13716
 attr configname General
-attr datetime 20251001-17:39:11
-attr datetimef 20251001-173911
+attr datetime 20251001-17:55:03
+attr datetimef 20251001-175503
 attr experiment General
 attr inifile omnetpp.ini
 attr iterationvars ""
@@ -10,7 +10,7 @@ attr iterationvarsd ""
 attr iterationvarsf ""
 attr measurement ""
 attr network SimpleNet
-attr processid 27260
+attr processid 13716
 attr repetition 0
 attr replication #0
 attr resultdir results
@@ -450,6 +450,10 @@ par SimpleNet.receiver address 900
 par SimpleNet.sender typename "\"project.Sender\""
 par SimpleNet.sender address 1
 par SimpleNet.sender message "\"Hello from Sender\""
+par SimpleNet.sender mail_from "\"alice@example.com\""
+par SimpleNet.sender mail_to "\"bob@example.com\""
+par SimpleNet.sender mail_subject "\"Greetings\""
+par SimpleNet.sender mail_body "\"This is the body.\""
 par SimpleNet.mta_Client_S typename "\"project.MTA_Client_S\""
 par SimpleNet.mta_Client_S address 101
 par SimpleNet.mta_Server_S typename "\"project.MTA_Server_S\""

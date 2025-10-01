@@ -28,8 +28,11 @@ void Receiver::handleMessage(cMessage *msg) {
         get->addPar("path").setStringValue("/read");
         send(get, "ppp$o");
     } else if (msg->getKind() == HTTP_RESPONSE) {
-        const char* c = msg->hasPar("content") ? msg->par("content").stringValue() : "<empty>";
-        EV << "Receiver got content: " << c << "\n";
+        const char* from = msg->hasPar("mail_from") ? msg->par("mail_from").stringValue() : "<unknown>";
+        const char* to = msg->hasPar("mail_to") ? msg->par("mail_to").stringValue() : "<unknown>";
+        const char* subj = msg->hasPar("mail_subject") ? msg->par("mail_subject").stringValue() : "<none>";
+        const char* body = msg->hasPar("mail_body") ? msg->par("mail_body").stringValue() : "<empty>";
+        EV << "Receiver got mail\n  From: " << from << "\n  To: " << to << "\n  Subject: " << subj << "\n  Body: " << body << "\n";
     }
     delete msg;  
 }

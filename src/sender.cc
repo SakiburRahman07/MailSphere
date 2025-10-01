@@ -8,6 +8,7 @@ class Sender : public cSimpleModule {
     int dnsAddr = 0;       // address of dns1
     const char* mtaQName = "mta_client_s"; // logical name to resolve
     std::string content;
+    std::string mailFrom, mailTo, mailSubject, mailBody;
   protected:
     void initialize() override;
     void handleMessage(cMessage *msg) override;
@@ -19,12 +20,20 @@ Define_Module(Sender);
 void Sender::initialize() {
     addr = par("address");
     content = par("message").stdstringValue();
+    mailFrom = par("mail_from").stdstringValue();
+    mailTo = par("mail_to").stdstringValue();
+    mailSubject = par("mail_subject").stdstringValue();
+    mailBody = par("mail_body").stdstringValue();
     // assume dns1 reachable via Router1 based on addressing; set logical address
     dnsAddr = 100; // will be configured in ini via routes; used as dst
     // Kick off DNS query for MTA_Client_S
     auto *q = mk("DNS_QUERY", DNS_QUERY, addr, dnsAddr);
     q->addPar("qname").setStringValue(mtaQName);
     q->addPar("content").setStringValue(content.c_str());
+    q->addPar("mail_from").setStringValue(mailFrom.c_str());
+    q->addPar("mail_to").setStringValue(mailTo.c_str());
+    q->addPar("mail_subject").setStringValue(mailSubject.c_str());
+    q->addPar("mail_body").setStringValue(mailBody.c_str());
     send(q, "ppp$o");
 }
 
@@ -34,6 +43,10 @@ void Sender::handleMessage(cMessage *msg) {
         auto *get = mk("HTTP_GET", HTTP_GET, addr, httpAddr);
         get->addPar("path").setStringValue("/submit");
         get->addPar("content").setStringValue(content.c_str());
+        get->addPar("mail_from").setStringValue(mailFrom.c_str());
+        get->addPar("mail_to").setStringValue(mailTo.c_str());
+        get->addPar("mail_subject").setStringValue(mailSubject.c_str());
+        get->addPar("mail_body").setStringValue(mailBody.c_str());
         send(get, "ppp$o");
     }
     delete msg;  

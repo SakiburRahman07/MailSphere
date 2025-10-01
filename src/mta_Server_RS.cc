@@ -23,7 +23,11 @@ void MTA_Server_RS::handleMessage(cMessage *msg) {
         auto *ack = mk("SMTP_ACK", SMTP_ACK, addr, SRC(msg));
         send(ack, "ppp$o", 0);
         auto *toMb = mk("SMTP_SEND", SMTP_SEND, addr, mailboxAddr);
-        if (msg->hasPar("content")) toMb->addPar("content").setStringValue(msg->par("content").stdstringValue().c_str());
+        if (msg->hasPar("content")) toMb->addPar("content").setStringValue(msg->par("content").stringValue());
+        if (msg->hasPar("mail_from")) toMb->addPar("mail_from").setStringValue(msg->par("mail_from").stringValue());
+        if (msg->hasPar("mail_to")) toMb->addPar("mail_to").setStringValue(msg->par("mail_to").stringValue());
+        if (msg->hasPar("mail_subject")) toMb->addPar("mail_subject").setStringValue(msg->par("mail_subject").stringValue());
+        if (msg->hasPar("mail_body")) toMb->addPar("mail_body").setStringValue(msg->par("mail_body").stringValue());
         send(toMb, "ppp$o", 1);
     }
     delete msg;  

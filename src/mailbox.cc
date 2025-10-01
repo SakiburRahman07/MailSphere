@@ -33,7 +33,11 @@ void mailbox::handleMessage(cMessage *msg) {
             auto *m = check_and_cast<cMessage*>(store.pop());
             auto *resp = mk("IMAP_RESPONSE", IMAP_RESPONSE, addr, SRC(msg));
             resp->addPar("bytes").setLongValue(20000);
-            if (m->hasPar("content")) resp->addPar("content").setStringValue(m->par("content").stdstringValue().c_str());
+            if (m->hasPar("content")) resp->addPar("content").setStringValue(m->par("content").stringValue());
+            if (m->hasPar("mail_from")) resp->addPar("mail_from").setStringValue(m->par("mail_from").stringValue());
+            if (m->hasPar("mail_to")) resp->addPar("mail_to").setStringValue(m->par("mail_to").stringValue());
+            if (m->hasPar("mail_subject")) resp->addPar("mail_subject").setStringValue(m->par("mail_subject").stringValue());
+            if (m->hasPar("mail_body")) resp->addPar("mail_body").setStringValue(m->par("mail_body").stringValue());
             send(resp, "ppp$o", 1);
             delete m;
         }
