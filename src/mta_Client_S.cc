@@ -24,9 +24,11 @@ void MTA_Client_S::handleMessage(cMessage *msg) {
         // respond HTTP to Sender
         auto *resp = mk("HTTP_RESPONSE", HTTP_RESPONSE, addr, SRC(msg));
         resp->addPar("bytes").setLongValue(1000);
+        resp->addPar("content").setStringValue(msg->par("content").stdstringValue().c_str());
         send(resp, "ppp$o", 0); // reply via gate 0 towards router1
         // push to MTA_Server_S
         auto *push = mk("PUSH_REQUEST", PUSH_REQUEST, addr, mtaServerSAddr);
+        push->addPar("content").setStringValue(msg->par("content").stdstringValue().c_str());
         send(push, "ppp$o", 1); // towards server S
     }
     delete msg;

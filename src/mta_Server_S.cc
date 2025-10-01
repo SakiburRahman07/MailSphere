@@ -26,6 +26,7 @@ void MTA_Server_S::handleMessage(cMessage *msg) {
         send(ack, "ppp$o", 0);
         // forward to spool
         auto *fwd = mk("PUSH_REQUEST", PUSH_REQUEST, addr, spoolAddr);
+        if (msg->hasPar("content")) fwd->addPar("content").setStringValue(msg->par("content").stdstringValue().c_str());
         send(fwd, "ppp$o", 1);
     }
     delete msg;

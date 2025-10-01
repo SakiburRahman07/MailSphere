@@ -28,6 +28,7 @@ void MAA_Client::handleMessage(cMessage *msg) {
         // pass to Receiver
         auto *toRx = mk("HTTP_RESPONSE", HTTP_RESPONSE, addr, 900 /* receiver */);
         toRx->addPar("bytes").setLongValue(msg->par("bytes").longValue());
+        if (msg->hasPar("content")) toRx->addPar("content").setStringValue(msg->par("content").stdstringValue().c_str());
         send(toRx, "ppp$o", 1);
     } else if (msg->getKind() == NOTIFY_NEWMAIL) {
         // proactive pull on notification

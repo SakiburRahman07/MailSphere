@@ -97,6 +97,7 @@ simple Sender
 {
     parameters:
         int address;
+        string message = default("Hello from Sender");
     @display("i=device/laptop,,0");
     gates:
         inout ppp;

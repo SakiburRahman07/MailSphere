@@ -36,9 +36,20 @@ enum {
 
 
 static cMessage* mk(const char* name, int kind, long src, long dst) {
-    auto *m = new cMessage(name, kind);
+    // Use cPacket for better animation in the GUI (packets are visualized on links)
+    auto *m = new cPacket(name, kind);
     m->addPar("src").setLongValue(src);
     m->addPar("dst").setLongValue(dst);
+    // give it a non-zero size for link animations
+    switch (kind) {
+        case DNS_QUERY: case DNS_RESPONSE: m->setByteLength(64); break;
+        case HTTP_GET: case HTTP_RESPONSE: m->setByteLength(1200); break;
+        case PUSH_REQUEST: case PUSH_ACK: m->setByteLength(300); break;
+        case SMTP_SEND: case SMTP_ACK: m->setByteLength(800); break;
+        case IMAP_FETCH: case IMAP_RESPONSE: m->setByteLength(800); break;
+        case NOTIFY_NEWMAIL: m->setByteLength(64); break;
+        default: m->setByteLength(256); break;
+    }
     return m;
 }
 static inline long SRC(cMessage* m){ return m->par("src").longValue(); }

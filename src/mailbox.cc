@@ -22,7 +22,7 @@ void mailbox::initialize() {
 void mailbox::handleMessage(cMessage *msg) {
     if (msg->getKind() == SMTP_SEND) {
         bool wasEmpty = store.isEmpty();
-        store.insert(msg); // keep SMTP envelopes
+        store.insert(msg); // keep SMTP envelopes (with content par)
         if (wasEmpty) {
             auto *note = mk("NOTIFY_NEWMAIL", NOTIFY_NEWMAIL, addr, maaServerAddr);
             send(note, "ppp$o", 1);
@@ -33,6 +33,7 @@ void mailbox::handleMessage(cMessage *msg) {
             auto *m = check_and_cast<cMessage*>(store.pop());
             auto *resp = mk("IMAP_RESPONSE", IMAP_RESPONSE, addr, SRC(msg));
             resp->addPar("bytes").setLongValue(20000);
+            if (m->hasPar("content")) resp->addPar("content").setStringValue(m->par("content").stdstringValue().c_str());
             send(resp, "ppp$o", 1);
             delete m;
         }

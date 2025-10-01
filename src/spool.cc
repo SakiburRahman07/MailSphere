@@ -23,6 +23,7 @@ void spool::handleMessage(cMessage *msg) {
     if (msg->getKind() == PUSH_REQUEST) {
         // simulate queueing delay then forward
         auto *fwd = mk("PUSH_REQUEST", PUSH_REQUEST, addr, nextHopAddr);
+        if (msg->hasPar("content")) fwd->addPar("content").setStringValue(msg->par("content").stdstringValue().c_str());
         sendDelayed(fwd, 0.01, "ppp$o", 1);
     }
     delete msg;  

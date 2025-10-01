@@ -27,6 +27,9 @@ void Receiver::handleMessage(cMessage *msg) {
         auto *get = mk("HTTP_GET", HTTP_GET, addr, maaClientAddr);
         get->addPar("path").setStringValue("/read");
         send(get, "ppp$o");
+    } else if (msg->getKind() == HTTP_RESPONSE) {
+        const char* c = msg->hasPar("content") ? msg->par("content").stringValue() : "<empty>";
+        EV << "Receiver got content: " << c << "\n";
     }
     delete msg;  
 }

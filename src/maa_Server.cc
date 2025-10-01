@@ -27,6 +27,7 @@ void MAA_Server::handleMessage(cMessage *msg) {
     } else if (msg->getKind() == IMAP_RESPONSE) {
         auto *resp = mk("HTTP_RESPONSE", HTTP_RESPONSE, addr, pendingClient);
         resp->addPar("bytes").setLongValue(20000);
+        if (msg->hasPar("content")) resp->addPar("content").setStringValue(msg->par("content").stdstringValue().c_str());
         send(resp, "ppp$o", 1);
         pendingClient = -1;
     } else if (msg->getKind() == NOTIFY_NEWMAIL) {

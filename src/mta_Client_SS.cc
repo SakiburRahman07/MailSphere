@@ -24,10 +24,12 @@ void MTA_Client_SS::handleMessage(cMessage *msg) {
     if (msg->getKind() == PUSH_REQUEST) {
         auto *q = mk("DNS_QUERY", DNS_QUERY, addr, dnsAddr);
         q->addPar("qname").setStringValue(serverQName);
+        if (msg->hasPar("content")) q->addPar("content").setStringValue(msg->par("content").stdstringValue().c_str());
         send(q, "ppp$o", 1); // to router
     } else if (msg->getKind() == DNS_RESPONSE) {
         long rsAddr = msg->par("answer").longValue();
         auto *smtp = mk("SMTP_SEND", SMTP_SEND, addr, rsAddr);
+        if (msg->hasPar("content")) smtp->addPar("content").setStringValue(msg->par("content").stdstringValue().c_str());
         send(smtp, "ppp$o", 1);
     }
     delete msg;
