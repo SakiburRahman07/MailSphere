@@ -8,9 +8,22 @@ class MTA_Client_SS : public cSimpleModule {
     int dnsAddr = 500;     // central DNS
     const char* serverQName = "mta_server_rs";
     long pendingSmtpDst = -1;
+    enum State { IDLE=0, RESOLVING, GREETING, ENVELOPE_FROM, ENVELOPE_RCPT, DATA_CMD, DATA_BODY, DONE, RETRY_WAIT };
+    State state = IDLE;
+    std::string content;
+    std::string mailFrom, mailTo, mailSubject, mailBody;
+    long declaredSize = -1;
+    int attempt = 0;
+    simtime_t backoff = 0;
   protected:
     void initialize() override;
     void handleMessage(cMessage *msg) override;
+    void startResolution(cMessage* orig);
+    void sendCmd(const char* verb, long dst);
+    void sendMailFrom(long dst);
+    void sendRcptTo(long dst);
+    void sendDataCmd(long dst);
+    void sendDataBody(long dst);
 };
 
 Define_Module(MTA_Client_SS);
@@ -22,23 +35,97 @@ void MTA_Client_SS::initialize() {
 
 void MTA_Client_SS::handleMessage(cMessage *msg) {
     if (msg->getKind() == PUSH_REQUEST) {
-        auto *q = mk("DNS_QUERY", DNS_QUERY, addr, dnsAddr);
-        q->addPar("qname").setStringValue(serverQName);
-        if (msg->hasPar("content")) q->addPar("content").setStringValue(msg->par("content").stringValue());
-        if (msg->hasPar("mail_from")) q->addPar("mail_from").setStringValue(msg->par("mail_from").stringValue());
-        if (msg->hasPar("mail_to")) q->addPar("mail_to").setStringValue(msg->par("mail_to").stringValue());
-        if (msg->hasPar("mail_subject")) q->addPar("mail_subject").setStringValue(msg->par("mail_subject").stringValue());
-        if (msg->hasPar("mail_body")) q->addPar("mail_body").setStringValue(msg->par("mail_body").stringValue());
-        send(q, "ppp$o", 1); // to router
-    } else if (msg->getKind() == DNS_RESPONSE) {
-        long rsAddr = msg->par("answer").longValue();
-        auto *smtp = mk("SMTP_SEND", SMTP_SEND, addr, rsAddr);
-        if (msg->hasPar("content")) smtp->addPar("content").setStringValue(msg->par("content").stringValue());
-        if (msg->hasPar("mail_from")) smtp->addPar("mail_from").setStringValue(msg->par("mail_from").stringValue());
-        if (msg->hasPar("mail_to")) smtp->addPar("mail_to").setStringValue(msg->par("mail_to").stringValue());
-        if (msg->hasPar("mail_subject")) smtp->addPar("mail_subject").setStringValue(msg->par("mail_subject").stringValue());
-        if (msg->hasPar("mail_body")) smtp->addPar("mail_body").setStringValue(msg->par("mail_body").stringValue());
-        send(smtp, "ppp$o", 1);
+        // capture fields
+        content   = msg->hasPar("content") ? msg->par("content").stringValue() : "";
+        mailFrom  = msg->hasPar("mail_from") ? msg->par("mail_from").stringValue() : "";
+        mailTo    = msg->hasPar("mail_to") ? msg->par("mail_to").stringValue() : "";
+        mailSubject = msg->hasPar("mail_subject") ? msg->par("mail_subject").stringValue() : "";
+        mailBody  = msg->hasPar("mail_body") ? msg->par("mail_body").stringValue() : "";
+        declaredSize = (long)(mailBody.size());
+        attempt = 0; backoff = 0;
+        startResolution(msg);
+        delete msg; return;
+    }
+    if (msg->getKind() == DNS_RESPONSE) {
+        pendingSmtpDst = msg->par("answer").longValue();
+        state = GREETING;
+        sendCmd("EHLO", pendingSmtpDst);
+        delete msg; return;
+    }
+    if (msg->getKind() == SMTP_RESP) {
+        int code = msg->par("code").longValue();
+        if (state == GREETING) {
+            if (code/100 == 2) { state = ENVELOPE_FROM; sendMailFrom(DST(msg)); }
+            else { /* treat as temp fail */ state = RETRY_WAIT; attempt++; backoff = std::min( SimTime( (double)attempt*0.1 ), SimTime(5.0) ); scheduleAt(simTime()+backoff, new cMessage("retry", PUSH_REQUEST)); }
+        } else if (state == ENVELOPE_FROM) {
+            if (code/100 == 2) { state = ENVELOPE_RCPT; sendRcptTo(DST(msg)); }
+            else if (code == 552) { /* too big, give up permanently */ state = DONE; }
+            else if (code/100 == 4) { state = RETRY_WAIT; attempt++; scheduleAt(simTime()+SimTime(attempt*0.2), new cMessage("retry", PUSH_REQUEST)); }
+            else { state = DONE; }
+        } else if (state == ENVELOPE_RCPT) {
+            if (code/100 == 2) { state = DATA_CMD; sendDataCmd(DST(msg)); }
+            else if (code/100 == 5) { state = DONE; }
+            else { state = RETRY_WAIT; attempt++; scheduleAt(simTime()+SimTime(attempt*0.2), new cMessage("retry", PUSH_REQUEST)); }
+        } else if (state == DATA_CMD) {
+            if (code == 354) { state = DATA_BODY; sendDataBody(DST(msg)); }
+            else if (code/100 == 4) { state = RETRY_WAIT; attempt++; scheduleAt(simTime()+SimTime(attempt*0.2), new cMessage("retry", PUSH_REQUEST)); }
+            else { state = DONE; }
+        } else if (state == DATA_BODY) {
+            if (code/100 == 2) { state = DONE; }
+            else if (code == 552) { state = DONE; }
+            else if (code/100 == 4) { state = RETRY_WAIT; attempt++; scheduleAt(simTime()+SimTime(attempt*0.2), new cMessage("retry", PUSH_REQUEST)); }
+            else { state = DONE; }
+        }
+        delete msg; return;
+    }
+    if (msg->isSelfMessage() && msg->getKind() == PUSH_REQUEST) {
+        startResolution(msg);
+        delete msg; return;
     }
     delete msg;
+}
+
+void MTA_Client_SS::startResolution(cMessage* orig) {
+    state = RESOLVING;
+    auto *q = mk("DNS_QUERY", DNS_QUERY, addr, dnsAddr);
+    q->addPar("qname").setStringValue(serverQName);
+    send(q, "ppp$o", 1);
+}
+
+void MTA_Client_SS::sendCmd(const char* verb, long dst) {
+    auto *m = mk("SMTP_CMD", SMTP_CMD, addr, dst);
+    m->addPar("verb").setStringValue(verb);
+    if (strcmp(verb, "EHLO")==0) m->addPar("arg1").setStringValue("client.local");
+    send(m, "ppp$o", 1);
+}
+
+void MTA_Client_SS::sendMailFrom(long dst) {
+    auto *m = mk("SMTP_CMD", SMTP_CMD, addr, dst);
+    m->addPar("verb").setStringValue("MAIL");
+    m->addPar("from").setStringValue(mailFrom.c_str());
+    m->addPar("size").setLongValue(declaredSize);
+    send(m, "ppp$o", 1);
+}
+
+void MTA_Client_SS::sendRcptTo(long dst) {
+    auto *m = mk("SMTP_CMD", SMTP_CMD, addr, dst);
+    m->addPar("verb").setStringValue("RCPT");
+    m->addPar("to").setStringValue(mailTo.c_str());
+    send(m, "ppp$o", 1);
+}
+
+void MTA_Client_SS::sendDataCmd(long dst) {
+    auto *m = mk("SMTP_CMD", SMTP_CMD, addr, dst);
+    m->addPar("verb").setStringValue("DATA");
+    send(m, "ppp$o", 1);
+}
+
+void MTA_Client_SS::sendDataBody(long dst) {
+    auto *m = mk("SMTP_CMD", SMTP_CMD, addr, dst);
+    m->addPar("verb").setStringValue("DATA_END");
+    m->addPar("bytes").setLongValue(declaredSize);
+    m->addPar("content").setStringValue(content.c_str());
+    m->addPar("mail_subject").setStringValue(mailSubject.c_str());
+    m->addPar("mail_body").setStringValue(mailBody.c_str());
+    send(m, "ppp$o", 1);
 }

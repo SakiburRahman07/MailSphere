@@ -23,6 +23,7 @@ simple MTA_Server_RS
 {
     parameters:
         int address;
+        int maxMessageSizeBytes = default(2000000);
     @display("i=device/server2,,0");
     gates:
         inout ppp[2];

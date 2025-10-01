@@ -30,6 +30,7 @@ enum {
     HTTP_GET=20, HTTP_RESPONSE=21,
     PUSH_REQUEST=30, PUSH_ACK=31,
     SMTP_SEND=40, SMTP_ACK=41,
+    SMTP_CMD=42, SMTP_RESP=43,
     IMAP_FETCH=50, IMAP_RESPONSE=51,
     NOTIFY_NEWMAIL=60
 };
@@ -46,6 +47,7 @@ static cMessage* mk(const char* name, int kind, long src, long dst) {
         case HTTP_GET: case HTTP_RESPONSE: m->setByteLength(1200); break;
         case PUSH_REQUEST: case PUSH_ACK: m->setByteLength(300); break;
         case SMTP_SEND: case SMTP_ACK: m->setByteLength(800); break;
+        case SMTP_CMD: case SMTP_RESP: m->setByteLength(200); break;
         case IMAP_FETCH: case IMAP_RESPONSE: m->setByteLength(800); break;
         case NOTIFY_NEWMAIL: m->setByteLength(64); break;
         default: m->setByteLength(256); break;

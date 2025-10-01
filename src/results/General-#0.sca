@@ -1,8 +1,8 @@
 version 3
-run General-0-20251001-18:23:21-2888
+run General-0-20251001-19:34:20-10544
 attr configname General
-attr datetime 20251001-18:23:21
-attr datetimef 20251001-182321
+attr datetime 20251001-19:34:20
+attr datetimef 20251001-193420
 attr experiment General
 attr inifile omnetpp.ini
 attr iterationvars ""
@@ -10,7 +10,7 @@ attr iterationvarsd ""
 attr iterationvarsf ""
 attr measurement ""
 attr network SimpleNet
-attr processid 2888
+attr processid 10544
 attr repetition 0
 attr replication #0
 attr resultdir results
@@ -439,6 +439,7 @@ par SimpleNet.dns address 500
 par SimpleNet.dns answerAddr 600
 par SimpleNet.mta_Server_RS typename "\"project.MTA_Server_RS\""
 par SimpleNet.mta_Server_RS address 600
+par SimpleNet.mta_Server_RS maxMessageSizeBytes 2000000
 par SimpleNet.mailbox typename "\"project.mailbox\""
 par SimpleNet.mailbox address 700
 par SimpleNet.maa_Server typename "\"project.MAA_Server\""
