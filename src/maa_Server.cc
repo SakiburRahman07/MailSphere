@@ -35,10 +35,9 @@ void MAA_Server::handleMessage(cMessage *msg) {
         send(resp, "ppp$o", 1);
         pendingClient = -1;
     } else if (msg->getKind() == NOTIFY_NEWMAIL) {
-        // passively trigger MAA_Client pull by sending a small HTTP hint
-        auto *hint = mk("HTTP_RESPONSE", HTTP_RESPONSE, addr, 850 /* maa_client */);
-        hint->addPar("bytes").setLongValue(1);
-        send(hint, "ppp$o", 1);
+        // Forward notification to MAA_Client to trigger pull
+        auto *note = mk("NOTIFY_NEWMAIL", NOTIFY_NEWMAIL, addr, 850 /* maa_client */);
+        send(note, "ppp$o", 1);
     }
     delete msg;  
 }
