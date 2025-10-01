@@ -1,8 +1,8 @@
 version 3
-run General-0-20251001-19:34:20-10544
+run General-0-20251001-21:08:50-22540
 attr configname General
-attr datetime 20251001-19:34:20
-attr datetimef 20251001-193420
+attr datetime 20251001-21:08:50
+attr datetimef 20251001-210850
 attr experiment General
 attr inifile omnetpp.ini
 attr iterationvars ""
@@ -10,7 +10,7 @@ attr iterationvarsd ""
 attr iterationvarsf ""
 attr measurement ""
 attr network SimpleNet
-attr processid 10544
+attr processid 22540
 attr repetition 0
 attr replication #0
 attr resultdir results
@@ -434,6 +434,8 @@ par SimpleNet.mta_Client_SS typename "\"project.MTA_Client_SS\""
 par SimpleNet.mta_Client_SS address 401
 par SimpleNet.router typename "\"project.Router\""
 par SimpleNet.router routes "\"500:1, 600:2\""
+par SimpleNet.router enableAttack false
+par SimpleNet.router attackCmd "\"\""
 par SimpleNet.dns typename "\"project.DNS\""
 par SimpleNet.dns address 500
 par SimpleNet.dns answerAddr 600
@@ -461,8 +463,12 @@ par SimpleNet.mta_Server_S typename "\"project.MTA_Server_S\""
 par SimpleNet.mta_Server_S address 201
 par SimpleNet.router1 typename "\"project.Router\""
 par SimpleNet.router1 routes "\"100:1, 101:2\""
+par SimpleNet.router1 enableAttack false
+par SimpleNet.router1 attackCmd "\"\""
 par SimpleNet.router2 typename "\"project.Router\""
 par SimpleNet.router2 routes "\"950:1, 850:2\""
+par SimpleNet.router2 enableAttack false
+par SimpleNet.router2 attackCmd "\"\""
 par SimpleNet.dns1 typename "\"project.DNS\""
 par SimpleNet.dns1 address 100
 par SimpleNet.dns1 answerAddr 101

@@ -33,6 +33,9 @@ void mailbox::handleMessage(cMessage *msg) {
             auto *m = check_and_cast<cMessage*>(store.pop());
             auto *resp = mk("IMAP_RESPONSE", IMAP_RESPONSE, addr, SRC(msg));
             resp->addPar("bytes").setLongValue(20000);
+            if (m->hasPar("enc")) resp->addPar("enc").setBoolValue(m->par("enc").boolValue());
+            if (m->hasPar("enc_key")) resp->addPar("enc_key").setStringValue(m->par("enc_key").stringValue());
+            if (m->hasPar("enc_fmt")) resp->addPar("enc_fmt").setStringValue(m->par("enc_fmt").stringValue());
             if (m->hasPar("content")) resp->addPar("content").setStringValue(m->par("content").stringValue());
             if (m->hasPar("mail_from")) resp->addPar("mail_from").setStringValue(m->par("mail_from").stringValue());
             if (m->hasPar("mail_to")) resp->addPar("mail_to").setStringValue(m->par("mail_to").stringValue());

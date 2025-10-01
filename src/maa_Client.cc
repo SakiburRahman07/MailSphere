@@ -28,6 +28,10 @@ void MAA_Client::handleMessage(cMessage *msg) {
         // pass to Receiver
         auto *toRx = mk("HTTP_RESPONSE", HTTP_RESPONSE, addr, 900 /* receiver */);
         toRx->addPar("bytes").setLongValue(msg->par("bytes").longValue());
+        // propagate encryption metadata so Receiver can decrypt
+        if (msg->hasPar("enc")) toRx->addPar("enc").setBoolValue(msg->par("enc").boolValue());
+        if (msg->hasPar("enc_fmt")) toRx->addPar("enc_fmt").setStringValue(msg->par("enc_fmt").stringValue());
+        if (msg->hasPar("enc_key")) toRx->addPar("enc_key").setStringValue(msg->par("enc_key").stringValue());
         if (msg->hasPar("content")) toRx->addPar("content").setStringValue(msg->par("content").stringValue());
         if (msg->hasPar("mail_from")) toRx->addPar("mail_from").setStringValue(msg->par("mail_from").stringValue());
         if (msg->hasPar("mail_to")) toRx->addPar("mail_to").setStringValue(msg->par("mail_to").stringValue());

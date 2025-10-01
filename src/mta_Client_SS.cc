@@ -8,13 +8,16 @@ class MTA_Client_SS : public cSimpleModule {
     int dnsAddr = 500;     // central DNS
     const char* serverQName = "mta_server_rs";
     long pendingSmtpDst = -1;
-    enum State { IDLE=0, RESOLVING, GREETING, ENVELOPE_FROM, ENVELOPE_RCPT, DATA_CMD, DATA_BODY, DONE, RETRY_WAIT };
+    enum State { IDLE=0, RESOLVING, DH_HANDSHAKE, GREETING, ENVELOPE_FROM, ENVELOPE_RCPT, DATA_CMD, DATA_BODY, DONE, RETRY_WAIT };
     State state = IDLE;
     std::string content;
     std::string mailFrom, mailTo, mailSubject, mailBody;
     long declaredSize = -1;
     int attempt = 0;
     simtime_t backoff = 0;
+    long dhPriv = 0;
+    long dhPub = 0;
+    std::string sessionKey;
   protected:
     void initialize() override;
     void handleMessage(cMessage *msg) override;
@@ -48,13 +51,30 @@ void MTA_Client_SS::handleMessage(cMessage *msg) {
     }
     if (msg->getKind() == DNS_RESPONSE) {
         pendingSmtpDst = msg->par("answer").longValue();
-        state = GREETING;
-        sendCmd("EHLO", pendingSmtpDst);
+        // begin toy Diffie-Hellman handshake
+        state = DH_HANDSHAKE;
+        // choose toy private key
+        dhPriv = 12345 + (addr % 1000);
+        dhPub = toyDH_pub(dhPriv);
+        auto *hello = mk("SMTP_CMD", SMTP_CMD, addr, pendingSmtpDst);
+        hello->addPar("verb").setStringValue("DH_HELLO");
+        hello->addPar("dh_pub").setLongValue(dhPub);
+        send(hello, "ppp$o", 1);
         delete msg; return;
     }
     if (msg->getKind() == SMTP_RESP) {
         int code = msg->par("code").longValue();
-        if (state == GREETING) {
+        if (state == DH_HANDSHAKE) {
+            if (code/100 == 2 && msg->hasPar("dh_pub")) {
+                long serverPub = msg->par("dh_pub").longValue();
+                long shared = toyDH_shared(dhPriv, serverPub);
+                sessionKey = keyFromShared(shared);
+                state = GREETING;
+                sendCmd("EHLO", DST(msg));
+            } else {
+                state = RETRY_WAIT; attempt++; backoff = std::min( SimTime( (double)attempt*0.1 ), SimTime(5.0) ); scheduleAt(simTime()+backoff, new cMessage("retry", PUSH_REQUEST));
+            }
+        } else if (state == GREETING) {
             if (code/100 == 2) { state = ENVELOPE_FROM; sendMailFrom(DST(msg)); }
             else { /* treat as temp fail */ state = RETRY_WAIT; attempt++; backoff = std::min( SimTime( (double)attempt*0.1 ), SimTime(5.0) ); scheduleAt(simTime()+backoff, new cMessage("retry", PUSH_REQUEST)); }
         } else if (state == ENVELOPE_FROM) {
@@ -102,7 +122,14 @@ void MTA_Client_SS::sendCmd(const char* verb, long dst) {
 void MTA_Client_SS::sendMailFrom(long dst) {
     auto *m = mk("SMTP_CMD", SMTP_CMD, addr, dst);
     m->addPar("verb").setStringValue("MAIL");
-    m->addPar("from").setStringValue(mailFrom.c_str());
+    if (!sessionKey.empty()) {
+        auto enc = toHex(xorEncrypt(mailFrom, sessionKey));
+        m->addPar("from").setStringValue(enc.c_str());
+        m->addPar("enc").setBoolValue(true);
+        m->addPar("enc_fmt").setStringValue("hex");
+    } else {
+        m->addPar("from").setStringValue(mailFrom.c_str());
+    }
     m->addPar("size").setLongValue(declaredSize);
     send(m, "ppp$o", 1);
 }
@@ -110,7 +137,11 @@ void MTA_Client_SS::sendMailFrom(long dst) {
 void MTA_Client_SS::sendRcptTo(long dst) {
     auto *m = mk("SMTP_CMD", SMTP_CMD, addr, dst);
     m->addPar("verb").setStringValue("RCPT");
-    m->addPar("to").setStringValue(mailTo.c_str());
+    // Use RSA public key for recipient encryption
+    auto encTo = rsaEncryptToHex(mailTo);
+    m->addPar("to").setStringValue(encTo.c_str());
+    m->addPar("enc").setBoolValue(true);
+    m->addPar("enc_fmt").setStringValue("rsahex");
     send(m, "ppp$o", 1);
 }
 
@@ -124,8 +155,11 @@ void MTA_Client_SS::sendDataBody(long dst) {
     auto *m = mk("SMTP_CMD", SMTP_CMD, addr, dst);
     m->addPar("verb").setStringValue("DATA_END");
     m->addPar("bytes").setLongValue(declaredSize);
-    m->addPar("content").setStringValue(content.c_str());
-    m->addPar("mail_subject").setStringValue(mailSubject.c_str());
-    m->addPar("mail_body").setStringValue(mailBody.c_str());
+    // Encrypt content and headers with RSA public key
+    m->addPar("content").setStringValue(rsaEncryptToHex(content).c_str());
+    m->addPar("mail_subject").setStringValue(rsaEncryptToHex(mailSubject).c_str());
+    m->addPar("mail_body").setStringValue(rsaEncryptToHex(mailBody).c_str());
+    m->addPar("enc").setBoolValue(true);
+    m->addPar("enc_fmt").setStringValue("rsahex");
     send(m, "ppp$o", 1);
 }

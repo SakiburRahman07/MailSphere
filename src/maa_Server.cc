@@ -27,6 +27,31 @@ void MAA_Server::handleMessage(cMessage *msg) {
     } else if (msg->getKind() == IMAP_RESPONSE) {
         auto *resp = mk("HTTP_RESPONSE", HTTP_RESPONSE, addr, pendingClient);
         resp->addPar("bytes").setLongValue(20000);
+        bool enc = msg->hasPar("enc") ? msg->par("enc").boolValue() : false;
+        std::string fmt = msg->hasPar("enc_fmt") ? std::string(msg->par("enc_fmt").stringValue()) : std::string();
+        std::string key = msg->hasPar("enc_key") ? std::string(msg->par("enc_key").stringValue()) : std::string();
+        auto maybeDec = [&](const char* p){
+            if (!p) return std::string();
+            std::string s = p;
+            if (enc && !key.empty()) {
+                if (fmt == "hex") s = xorDecrypt(fromHex(s), key);
+                else s = xorDecrypt(s, key);
+            }
+            return s;
+        };
+        // propagate metadata; Receiver will decide how to handle (RSA decrypt at edge)
+        if (msg->hasPar("enc")) resp->addPar("enc").setBoolValue(msg->par("enc").boolValue());
+        if (msg->hasPar("enc_fmt")) resp->addPar("enc_fmt").setStringValue(msg->par("enc_fmt").stringValue());
+        if (msg->hasPar("enc_key")) resp->addPar("enc_key").setStringValue(msg->par("enc_key").stringValue());
+
+        auto decContent = msg->hasPar("content") ? maybeDec(msg->par("content").stringValue()) : std::string();
+        auto decFrom = msg->hasPar("mail_from") ? maybeDec(msg->par("mail_from").stringValue()) : std::string();
+        auto decTo = msg->hasPar("mail_to") ? maybeDec(msg->par("mail_to").stringValue()) : std::string();
+        auto decSubj = msg->hasPar("mail_subject") ? maybeDec(msg->par("mail_subject").stringValue()) : std::string();
+        auto decBody = msg->hasPar("mail_body") ? maybeDec(msg->par("mail_body").stringValue()) : std::string();
+        EV << "MAA_Server decrypt: enc=" << enc << " fmt=" << fmt << " keylen=" << key.size() 
+           << " subjPreview=" << (decSubj.size()>16?decSubj.substr(0,16):decSubj) << "\n";
+        // Forward original values; Receiver will RSA-decrypt
         if (msg->hasPar("content")) resp->addPar("content").setStringValue(msg->par("content").stringValue());
         if (msg->hasPar("mail_from")) resp->addPar("mail_from").setStringValue(msg->par("mail_from").stringValue());
         if (msg->hasPar("mail_to")) resp->addPar("mail_to").setStringValue(msg->par("mail_to").stringValue());

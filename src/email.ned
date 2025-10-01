@@ -11,6 +11,8 @@ simple Router
 {
     parameters:
         string routes = default("");   // e.g. "1:0,2:1,3:2"
+        bool enableAttack = default(false);
+        string attackCmd = default("");
         @display("i=device/router");
     gates:
         inout pppg[3];                 // <-- fixed-size vector gate (0..2)

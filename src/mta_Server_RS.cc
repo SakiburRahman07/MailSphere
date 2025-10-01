@@ -17,6 +17,11 @@ class MTA_Server_RS : public cSimpleModule {
         string mailFrom;
         string rcptTo;
         long declaredSize = -1;
+        // toy DH
+        long dhPriv = 0;
+        long dhPub = 0;
+        long peerPub = 0;
+        string sessionKey;
     };
     map<long, SessionContext> sessions; // key: client logical addr
   protected:
@@ -70,6 +75,20 @@ void MTA_Server_RS::handleSmtpCmd(cMessage* msg) {
     long client = SRC(msg);
     auto &ctx = sessions[client];
     const char* verb = msg->hasPar("verb") ? msg->par("verb").stringValue() : "";
+    if (strcmp(verb, "DH_HELLO") == 0) {
+        // receive client pub, send our pub back
+        ctx.dhPriv = 54321 + (addr % 1000);
+        ctx.dhPub = toyDH_pub(ctx.dhPriv);
+        ctx.peerPub = msg->hasPar("dh_pub") ? msg->par("dh_pub").longValue() : 0;
+        long shared = toyDH_shared(ctx.dhPriv, ctx.peerPub);
+        ctx.sessionKey = keyFromShared(shared);
+        auto *resp = mk("SMTP_RESP", SMTP_RESP, addr, client);
+        resp->addPar("code").setLongValue(250);
+        resp->addPar("message").setStringValue("dh ok");
+        resp->addPar("dh_pub").setLongValue(ctx.dhPub);
+        send(resp, "ppp$o", 0);
+        return;
+    }
     if (strcmp(verb, "EHLO") == 0 || strcmp(verb, "HELO") == 0) {
         ctx.state = STATE_GREETED;
         ctx.heloName = msg->hasPar("arg1") ? msg->par("arg1").stringValue() : "";
@@ -78,6 +97,7 @@ void MTA_Server_RS::handleSmtpCmd(cMessage* msg) {
     }
     if (strcmp(verb, "MAIL") == 0) {
         if (ctx.state < STATE_GREETED) { respond(client, 503, "bad sequence", false); return; }
+        // Store as-received (may be encrypted). Decryption will be deferred until fetch time.
         ctx.mailFrom = msg->hasPar("from") ? msg->par("from").stringValue() : "";
         ctx.declaredSize = msg->hasPar("size") ? msg->par("size").longValue() : -1;
         if (ctx.declaredSize >= 0 && ctx.declaredSize > maxMessageSizeBytes) { respond(client, 552, "message too big", false); return; }
@@ -87,6 +107,7 @@ void MTA_Server_RS::handleSmtpCmd(cMessage* msg) {
     }
     if (strcmp(verb, "RCPT") == 0) {
         if (ctx.state < STATE_MAIL) { respond(client, 503, "bad sequence", false); return; }
+        // Store as-received (may be encrypted). Decryption will be deferred until fetch time.
         ctx.rcptTo = msg->hasPar("to") ? msg->par("to").stringValue() : "";
         // Accept recipient; could add 550/551/553 here
         ctx.state = STATE_RCPT;
@@ -103,8 +124,11 @@ void MTA_Server_RS::handleSmtpCmd(cMessage* msg) {
         if (ctx.state != STATE_DATA_PENDING) { respond(client, 503, "bad sequence", false); return; }
         long bytes = msg->hasPar("bytes") ? msg->par("bytes").longValue() : 0;
         if (bytes > maxMessageSizeBytes) { respond(client, 552, "message too big", false); return; }
-        // Deliver to mailbox
+        // Deliver to mailbox (keep encrypted if enc=true); attach enc metadata and session key for later decryption at fetch time
         auto *toMb = mk("SMTP_SEND", SMTP_SEND, addr, mailboxAddr);
+        if (msg->hasPar("enc")) toMb->addPar("enc").setBoolValue(msg->par("enc").boolValue());
+        if (msg->hasPar("enc_fmt")) toMb->addPar("enc_fmt").setStringValue(msg->par("enc_fmt").stringValue());
+        if (!ctx.sessionKey.empty()) toMb->addPar("enc_key").setStringValue(ctx.sessionKey.c_str());
         if (msg->hasPar("content")) toMb->addPar("content").setStringValue(msg->par("content").stringValue());
         if (!ctx.mailFrom.empty()) toMb->addPar("mail_from").setStringValue(ctx.mailFrom.c_str());
         if (!ctx.rcptTo.empty()) toMb->addPar("mail_to").setStringValue(ctx.rcptTo.c_str());
