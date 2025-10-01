@@ -21,6 +21,8 @@ simple Router
 //
 simple MTA_Server_RS
 {
+    parameters:
+        int address;
     @display("i=device/server2,,0");
     gates:
         inout ppp[2];
@@ -31,6 +33,8 @@ simple MTA_Server_RS
 //
 simple MTA_Client_SS
 {
+    parameters:
+        int address;
     @display("i=device/server2,,0");
     gates:
         inout ppp[2];
@@ -41,6 +45,8 @@ simple MTA_Client_SS
 //
 simple MAA_Server
 {
+    parameters:
+        int address;
     @display("i=abstract/server,,0");
     gates:
         inout ppp[2];
@@ -51,6 +57,8 @@ simple MAA_Server
 //
 simple MAA_Client
 {
+    parameters:
+        int address;
     @display("i=abstract/server,,0");
     gates:
         inout ppp[2];
@@ -61,6 +69,8 @@ simple MAA_Client
 //
 simple spool
 {
+    parameters:
+        int address;
     @display("i=block/queue,,0");
     gates:
         inout ppp[2];
@@ -71,6 +81,8 @@ simple spool
 //
 simple mailbox
 {
+    parameters:
+        int address;
     @display("i=old/mailbox,,0");
     gates:
         inout ppp[2];
@@ -83,6 +95,8 @@ simple mailbox
 //
 simple Sender
 {
+    parameters:
+        int address;
     @display("i=device/laptop,,0");
     gates:
         inout ppp;
@@ -93,6 +107,8 @@ simple Sender
 //
 simple Receiver
 {
+    parameters:
+        int address;
     @display("i=device/pc,,0");
     gates:
         inout ppp;
@@ -124,6 +140,8 @@ simple HTTP
 //
 simple MTA_Client_S
 {
+    parameters:
+        int address;
     @display("i=old/server1,,0");
     gates:
         inout ppp[2];
@@ -134,6 +152,8 @@ simple MTA_Client_S
 //
 simple MTA_Server_S
 {
+    parameters:
+        int address;
     @display("i=old/server1,,0");
     gates:
         inout ppp[2];
