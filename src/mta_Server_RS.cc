@@ -9,6 +9,9 @@ class MTA_Server_RS : public cSimpleModule {
     int addr = 0;
     int mailboxAddr = 700;
     long maxMessageSizeBytes = 1000000;
+    
+    // RSA Keys
+    RSAKeyPair myRSAKeys;
 
     enum SessionState { STATE_INIT=0, STATE_GREETED, STATE_MAIL, STATE_RCPT, STATE_DATA_PENDING };
     struct SessionContext {
@@ -24,6 +27,9 @@ class MTA_Server_RS : public cSimpleModule {
         long dhPub = 0;
         long peerPub = 0;
         string sessionKey;
+        // Client's RSA public key
+        unsigned long long clientRSAPublicE = 0;
+        unsigned long long clientRSAPublicN = 0;
     };
     map<long, SessionContext> sessions; // key: client logical addr
   protected:
@@ -39,6 +45,11 @@ Define_Module(MTA_Server_RS);
 void MTA_Server_RS::initialize() {
     addr = par("address");
     if (hasPar("maxMessageSizeBytes")) maxMessageSizeBytes = par("maxMessageSizeBytes");
+    
+    // Generate RSA key pair
+    myRSAKeys = generateRSAKeys();
+    EV << "MTA_Server_RS[" << addr << "] Generated RSA keys: n=" << myRSAKeys.n 
+       << " e=" << myRSAKeys.e << " d=" << myRSAKeys.d << endl;
 }
 
 void MTA_Server_RS::handleMessage(cMessage *msg) {
@@ -84,10 +95,28 @@ void MTA_Server_RS::handleSmtpCmd(cMessage* msg) {
         ctx.peerPub = msg->hasPar("dh_pub") ? msg->par("dh_pub").longValue() : 0;
         long shared = toyDH_shared(ctx.dhPriv, ctx.peerPub);
         ctx.sessionKey = keyFromShared(shared);
+        
+        // RECEIVE CLIENT'S RSA PUBLIC KEY
+        if (msg->hasPar("rsa_e") && msg->hasPar("rsa_n")) {
+            ctx.clientRSAPublicE = (unsigned long long)msg->par("rsa_e").doubleValue();
+            ctx.clientRSAPublicN = (unsigned long long)msg->par("rsa_n").doubleValue();
+            
+            EV << "MTA_Server_RS[" << addr << "] Received client RSA public key: e=" 
+               << ctx.clientRSAPublicE << " n=" << ctx.clientRSAPublicN << endl;
+        }
+        
         auto *resp = mk("SMTP_RESP", SMTP_RESP, addr, client);
         resp->addPar("code").setLongValue(250);
         resp->addPar("message").setStringValue("dh ok");
         resp->addPar("dh_pub").setLongValue(ctx.dhPub);
+        
+        // SEND SERVER'S RSA PUBLIC KEY
+        resp->addPar("rsa_e").setDoubleValue((double)myRSAKeys.e);
+        resp->addPar("rsa_n").setDoubleValue((double)myRSAKeys.n);
+        
+        EV << "MTA_Server_RS[" << addr << "] Sending RSA public key: e=" << myRSAKeys.e 
+           << " n=" << myRSAKeys.n << endl;
+        
         send(resp, "ppp$o", 0);
         return;
     }

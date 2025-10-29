@@ -1,0 +1,85 @@
+============================================================
+    MALICIOUS SNIFFER (Man-in-the-Middle) ACTIVATED        
+============================================================
+Attack Type: Man-in-the-Middle on DH + RSA Key Exchange
+Position: Between Sender (mta_Client_SS) and Receiver (mta_Server_RS)
+Simulation Start Time: 0
+============================================================
+
+
+[MITM ATTACK - DH_HELLO FROM SENDER]
+Time: 0.0135312 seconds
+Sender's real DH public key: 63730
+Sender's RSA: e=17 n=3233
+Sniffer's shared secret with Sender: 9
+Session key with Sender: k:9
+Sniffer substitutes DH public key: 63730 -> 20
+Sniffer substitutes RSA keys: e=17 n=3233 -> e=17 n=3233
+
+[MITM ATTACK - DH_HANDSHAKE FROM RECEIVER]
+Time: 0.0143952 seconds
+Receiver's real DH public key: 65147
+Receiver's RSA: e=17 n=3233
+Sniffer's shared secret with Receiver: 5
+Session key with Receiver: k:5
+Sniffer substitutes DH public key: 65147 -> 2
+Sniffer substitutes RSA keys: e=17 n=3233 -> e=17 n=3233
+
+============================================================
+MITM ATTACK SUCCESSFUL!
+Two separate sessions established:
+  Sender <-> Sniffer: shared=9 key=k:9
+  Sniffer <-> Receiver: shared=5 key=k:5
+============================================================
+
+[MITM - SMTP INTERCEPTION]
+Time: 0.0148272 seconds
+From: Sender
+SMTP Command: EHLO
+
+[MITM - SMTP INTERCEPTION]
+Time: 0.0161232 seconds
+From: Sender
+SMTP Command: MAIL
+DECRYPTED FROM: alice@example.com
+Message re-encrypted and forwarded to Receiver
+
+[MITM - SMTP INTERCEPTION]
+Time: 0.0174192 seconds
+From: Sender
+SMTP Command: RCPT
+DECRYPTED TO: bob@example.com
+Message re-encrypted and forwarded to Receiver
+
+[MITM - SMTP INTERCEPTION]
+Time: 0.0187152 seconds
+From: Sender
+SMTP Command: DATA
+
+[MITM - SMTP INTERCEPTION]
+Time: 0.0200112 seconds
+From: Sender
+SMTP Command: DATA_END
+DECRYPTED SUBJECT: Greetings
+DECRYPTED BODY: This is the body.
+DECRYPTED CONTENT: Hello from Sender
+Message re-encrypted and forwarded to Receiver
+
+============================================================
+           MITM ATTACK SUMMARY                              
+============================================================
+Total packets intercepted: 14
+MITM Active: YES - ATTACK SUCCESSFUL
+
+Two separate sessions established:
+  Sender <-> Sniffer:
+    Shared secret: 9
+    Session key: k:9
+  Sniffer <-> Receiver:
+    Shared secret: 5
+    Session key: k:5
+
+Sender thinks: Sender <-> Receiver
+Receiver thinks: Sender <-> Receiver
+Reality: Sender <-> Sniffer <-> Receiver
+============================================================

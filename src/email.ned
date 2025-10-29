@@ -167,6 +167,16 @@ simple MTA_Server_S
         inout ppp[2];
 }
 
+//
+// Malicious Sniffer - intercepts and decrypts traffic
+//
+simple MaliciousSniffer
+{
+    @display("i=block/segm,red");
+    gates:
+        inout ppp[2];
+}
+
 network SimpleNet
 {
     @display("bgb=1162,561");
@@ -219,11 +229,17 @@ network SimpleNet
         dns2: DNS {
             @display("p=951,210");
         }
+        // MALICIOUS SNIFFER - positioned between mta_Client_SS and router
+        sniffer: MaliciousSniffer {
+            @display("p=500,458");
+        }
     connections:
         mta_Client_S.ppp[1] <--> P2P <--> mta_Server_S.ppp[0];
         mta_Server_S.ppp[1] <--> P2P <--> spool.ppp[0];
         spool.ppp[1] <--> P2P <--> mta_Client_SS.ppp[0];
-        mta_Client_SS.ppp[1] <--> P2P <--> router.pppg[0];
+        // INSERT SNIFFER HERE - intercepts traffic between mta_Client_SS and router
+        mta_Client_SS.ppp[1] <--> P2P <--> sniffer.ppp[0];
+        sniffer.ppp[1] <--> P2P <--> router.pppg[0];
         router.pppg[1] <--> P2P <--> dns.ppp;
         router.pppg[2] <--> P2P <--> mta_Server_RS.ppp[0];
         mta_Server_RS.ppp[1] <--> P2P <--> mailbox.ppp[0];

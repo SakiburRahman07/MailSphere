@@ -1,8 +1,8 @@
 version 3
-run General-0-20251029-18:36:53-22676
+run General-0-20251029-19:47:09-18188
 attr configname General
-attr datetime 20251029-18:36:53
-attr datetimef 20251029-183653
+attr datetime 20251029-19:47:09
+attr datetimef 20251029-194709
 attr experiment General
 attr inifile omnetpp.ini
 attr iterationvars ""
@@ -10,7 +10,7 @@ attr iterationvarsd ""
 attr iterationvarsf ""
 attr measurement ""
 attr network SimpleNet
-attr processid 22676
+attr processid 18188
 attr repetition 0
 attr replication #0
 attr resultdir results
@@ -128,6 +128,32 @@ attr unit bps
 par SimpleNet.mta_Client_SS.ppp$o[1].channel ber 0
 attr mutable ""
 par SimpleNet.mta_Client_SS.ppp$o[1].channel per 0
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[0].channel typename "\"project.P2P\""
+par SimpleNet.sniffer.ppp$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.sniffer.ppp$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.sniffer.ppp$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[0].channel per 0
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[1].channel typename "\"project.P2P\""
+par SimpleNet.sniffer.ppp$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.sniffer.ppp$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.sniffer.ppp$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[1].channel per 0
 attr mutable ""
 par SimpleNet.router.pppg$o[0].channel typename "\"project.P2P\""
 par SimpleNet.router.pppg$o[0].channel disabled false
@@ -475,5 +501,6 @@ par SimpleNet.dns1 answerAddr 101
 par SimpleNet.dns2 typename "\"project.DNS\""
 par SimpleNet.dns2 address 950
 par SimpleNet.dns2 answerAddr 850
+par SimpleNet.sniffer typename "\"project.MaliciousSniffer\""
 par SimpleNet typename "\"project.SimpleNet\""
 

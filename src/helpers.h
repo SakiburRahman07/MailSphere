@@ -121,6 +121,64 @@ static inline unsigned long long rsaN() { return 3233ULL; }
 static inline unsigned long long rsaE() { return 17ULL; }
 static inline unsigned long long rsaD() { return 2753ULL; }
 
+// RSA Key Pair structure
+struct RSAKeyPair {
+    unsigned long long n;  // modulus (p * q)
+    unsigned long long e;  // public exponent
+    unsigned long long d;  // private exponent
+};
+
+// Extended Euclidean Algorithm for modular inverse
+static inline long long extGCD(long long a, long long b, long long &x, long long &y) {
+    if (b == 0) {
+        x = 1;
+        y = 0;
+        return a;
+    }
+    long long x1, y1;
+    long long gcd = extGCD(b, a % b, x1, y1);
+    x = y1;
+    y = x1 - (a / b) * y1;
+    return gcd;
+}
+
+// Modular inverse: find d such that (e * d) mod phi = 1
+static inline unsigned long long modInverse(unsigned long long e, unsigned long long phi) {
+    long long x, y;
+    long long gcd = extGCD((long long)e, (long long)phi, x, y);
+    if (gcd != 1) return 0; // Inverse doesn't exist
+    return (unsigned long long)((x % (long long)phi + (long long)phi) % (long long)phi);
+}
+
+// Factor n to find p and q (brute force for small primes)
+static inline std::pair<unsigned long long, unsigned long long> factorize(unsigned long long n) {
+    for (unsigned long long i = 2; i * i <= n; i++) {
+        if (n % i == 0) {
+            return {i, n / i};
+        }
+    }
+    return {0, 0}; // Failed to factor
+}
+
+// Generate RSA key pair with small primes (for educational attack demonstration)
+static inline RSAKeyPair generateRSAKeys() {
+    // Use small primes for toy RSA (easy to factor for demonstration)
+    unsigned long long p = 61;   // First prime
+    unsigned long long q = 53;   // Second prime
+    unsigned long long n = p * q; // n = 3233
+    
+    // phi(n) = (p-1) * (q-1)
+    unsigned long long phi = (p - 1) * (q - 1); // phi = 3120
+    
+    // Public exponent (commonly 65537, but we use 17 for simplicity)
+    unsigned long long e = 17;
+    
+    // Calculate private exponent d such that (e * d) mod phi = 1
+    unsigned long long d = modInverse(e, phi);
+    
+    return {n, e, d};
+}
+
 static inline unsigned long long modExp(unsigned long long base, unsigned long long exp, unsigned long long mod) {
     unsigned long long result = 1ULL % mod;
     unsigned long long b = base % mod;
@@ -133,11 +191,18 @@ static inline unsigned long long modExp(unsigned long long base, unsigned long l
 }
 
 // Encrypt bytes with RSA (per-byte) and output as hex of 2-byte blocks (big-endian)
-static inline std::string rsaEncryptToHex(const std::string &plain) {
+// Default parameters for backward compatibility
+static inline std::string rsaEncryptToHex(const std::string &plain, 
+                                          unsigned long long e = 0, 
+                                          unsigned long long n = 0) {
+    // Use default values if not provided
+    if (e == 0) e = rsaE();
+    if (n == 0) n = rsaN();
+    
     std::string raw;
     raw.reserve(plain.size() * 2);
     for (unsigned char ch : plain) {
-        unsigned long long c = modExp((unsigned long long)ch, rsaE(), rsaN());
+        unsigned long long c = modExp((unsigned long long)ch, e, n);
         unsigned char hi = (unsigned char)((c >> 8) & 0xFF);
         unsigned char lo = (unsigned char)(c & 0xFF);
         raw.push_back((char)hi);
@@ -147,7 +212,14 @@ static inline std::string rsaEncryptToHex(const std::string &plain) {
 }
 
 // Decrypt from hex of 2-byte blocks (big-endian) into original bytes
-static inline std::string rsaDecryptFromHex(const std::string &hexCipher) {
+// Default parameters for backward compatibility
+static inline std::string rsaDecryptFromHex(const std::string &hexCipher,
+                                            unsigned long long d = 0,
+                                            unsigned long long n = 0) {
+    // Use default values if not provided
+    if (d == 0) d = rsaD();
+    if (n == 0) n = rsaN();
+    
     std::string raw = fromHex(hexCipher);
     std::string out;
     if (raw.size() % 2 != 0) return out;
@@ -156,7 +228,7 @@ static inline std::string rsaDecryptFromHex(const std::string &hexCipher) {
         unsigned int hi = (unsigned char)raw[i];
         unsigned int lo = (unsigned char)raw[i+1];
         unsigned long long c = ((unsigned long long)hi << 8) | (unsigned long long)lo;
-        unsigned long long m = modExp(c, rsaD(), rsaN());
+        unsigned long long m = modExp(c, d, n);
         out.push_back((char)(m & 0xFF));
     }
     return out;
