@@ -45,6 +45,9 @@ class MaliciousSniffer : public cSimpleModule {
     bool clientKeysCompromised = false;
     bool serverKeysCompromised = false;
     
+    // Certificate detection flag - when true, sniffer becomes transparent relay
+    bool certificateDetected = false;
+    
     // Attack function: Factor n and derive private key
     bool attackRSA(unsigned long long e, unsigned long long n, bool isClient) {
         EV << "\n";
@@ -198,6 +201,37 @@ class MaliciousSniffer : public cSimpleModule {
         int arrivalIndex = arrivalGate->getIndex();
         int outGateIndex = (arrivalIndex == 0) ? 1 : 0;
         
+        // If certificate detected, operate in TRANSPARENT MODE - forward everything unmodified
+        if (certificateDetected) {
+            EV << "[TRANSPARENT MODE] Forwarding message unmodified (Certificate security active)\n";
+            send(msg, "ppp$o", outGateIndex);
+            return;
+        }
+        
+        // ALWAYS forward certificate-related messages unmodified
+        // These are part of the certificate infrastructure and should not be tampered with
+        if (msg->getKind() == 70 || msg->getKind() == 71) {  // CERT_REQUEST=70, CERT_RESPONSE=71
+            // For CERT_RESPONSE coming from router (arrivalIndex=1), check destination address
+            // Only forward if it's intended for mta_Client_SS (500)
+            if (msg->getKind() == 71 && arrivalIndex == 1) {
+                long destAddr = DST(msg);
+                if (destAddr != 500) {
+                    // This certificate response is NOT for mta_Client_SS (500)
+                    // Drop it - it's for another module (e.g., mta_Server_RS at 600)
+                    EV << "[CERTIFICATE INFRASTRUCTURE] Dropping CERT_RESPONSE for address " 
+                       << destAddr << " (not for mta_Client_SS)\n";
+                    delete msg;
+                    return;
+                }
+            }
+            
+            EV << "[CERTIFICATE INFRASTRUCTURE] Forwarding " 
+               << (msg->getKind() == 70 ? "CERT_REQUEST" : "CERT_RESPONSE") 
+               << " unmodified\n";
+            send(msg, "ppp$o", outGateIndex);
+            return;
+        }
+        
         double currentTime = simTime().dbl();
         
         // ===== INTERCEPT DH_HELLO FROM SENDER (mta_Client_SS) =====
@@ -205,6 +239,35 @@ class MaliciousSniffer : public cSimpleModule {
             std::string verb = msg->par("verb").stringValue();
             
             if (verb == "DH_HELLO" && arrivalIndex == 0) {
+                // CHECK FOR CERTIFICATE - If present, MITM attack will fail!
+                if (msg->hasPar("has_certificate") && msg->par("has_certificate").boolValue()) {
+                    certificateDetected = true;  // Set flag - all future messages will be forwarded unmodified
+                    
+                    EV << "\n";
+                    EV << "╔═══════════════════════════════════════════════════════════╗\n";
+                    EV << "║ ⚠️  CERTIFICATE DETECTED IN DH_HELLO!                    ║\n";
+                    EV << "║                                                           ║\n";
+                    EV << "║ MITM ATTACK WILL FAIL!                                   ║\n";
+                    EV << "║                                                           ║\n";
+                    EV << "║ Reason: Sniffer cannot forge valid certificate signature ║\n";
+                    EV << "║ CA's private key is required to sign certificates        ║\n";
+                    EV << "║ Even if Sniffer substitutes keys, signature won't match  ║\n";
+                    EV << "║ Receiver will reject the invalid certificate!            ║\n";
+                    EV << "║                                                           ║\n";
+                    EV << "║ 🔒 Sniffer entering TRANSPARENT MODE - forwarding all    ║\n";
+                    EV << "║    messages unmodified without interception.             ║\n";
+                    EV << "╚═══════════════════════════════════════════════════════════╝\n\n";
+                    
+                    logFile << "\n[CERTIFICATE-BASED SECURITY ACTIVE]" << std::endl;
+                    logFile << "Certificate detected in DH_HELLO - MITM attack prevented!" << std::endl;
+                    logFile << "Sniffer cannot forge valid CA signature." << std::endl;
+                    logFile << "Entering TRANSPARENT MODE - all future messages forwarded unmodified." << std::endl;
+                    
+                    // Forward message unmodified - attack impossible
+                    send(msg, "ppp$o", outGateIndex);
+                    return;
+                }
+                
                 senderAddr = msg->par("src").longValue();
                 receiverAddr = msg->par("dst").longValue();
                 
@@ -277,6 +340,23 @@ class MaliciousSniffer : public cSimpleModule {
         
         // ===== INTERCEPT DH_HANDSHAKE FROM RECEIVER (mta_Server_RS) =====
         if (msg->getKind() == SMTP_RESP && arrivalIndex == 1) {
+            // CHECK FOR CERTIFICATE - If present, attack already failed!
+            if (msg->hasPar("has_certificate") && msg->par("has_certificate").boolValue()) {
+                EV << "\n";
+                EV << "┌─────────────────────────────────────────────────────────┐\n";
+                EV << "│ ⚠️  CERTIFICATE IN DH_HANDSHAKE - Attack Failed!        │\n";
+                EV << "│ Receiver is using certificate-based authentication      │\n";
+                EV << "│ Forwarding unmodified response...                       │\n";
+                EV << "└─────────────────────────────────────────────────────────┘\n\n";
+                
+                logFile << "\n[CERTIFICATE DETECTED IN DH_HANDSHAKE]" << std::endl;
+                logFile << "Attack impossible - forwarding unmodified." << std::endl;
+                
+                // Forward message unmodified
+                send(msg, "ppp$o", 0);  // Send to Sender
+                return;
+            }
+            
             // Extract Receiver's real public keys
             if (msg->hasPar("dh_pub") && msg->hasPar("rsa_e") && msg->hasPar("rsa_n")) {
                 long receiverRealDHPub = msg->par("dh_pub").longValue();

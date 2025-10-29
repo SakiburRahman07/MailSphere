@@ -6,6 +6,7 @@ class MAA_Client : public cSimpleModule {
   private:
     int addr = 0;
     int serverAddr = 800;
+    int receiverAddr = 850;  // default, will be set from par
   protected:
     void initialize() override;
     void handleMessage(cMessage *msg) override;
@@ -16,6 +17,7 @@ Define_Module(MAA_Client);
 // ---- Implementations ----
 void MAA_Client::initialize() {
     addr = par("address");
+    receiverAddr = hasPar("receiverAddr") ? (int)par("receiverAddr").intValue() : 850;
 }
 
 void MAA_Client::handleMessage(cMessage *msg) {
@@ -26,7 +28,7 @@ void MAA_Client::handleMessage(cMessage *msg) {
         send(get, "ppp$o", 0);
     } else if (msg->getKind() == HTTP_RESPONSE) {
         // pass to Receiver
-        auto *toRx = mk("HTTP_RESPONSE", HTTP_RESPONSE, addr, 900 /* receiver */);
+        auto *toRx = mk("HTTP_RESPONSE", HTTP_RESPONSE, addr, receiverAddr);
         toRx->addPar("bytes").setLongValue(msg->par("bytes").longValue());
         // propagate encryption metadata so Receiver can decrypt
         if (msg->hasPar("enc")) toRx->addPar("enc").setBoolValue(msg->par("enc").boolValue());

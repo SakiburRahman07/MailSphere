@@ -37,7 +37,9 @@ enum {
     SMTP_SEND=40, SMTP_ACK=41,
     SMTP_CMD=42, SMTP_RESP=43,
     IMAP_FETCH=50, IMAP_RESPONSE=51,
-    NOTIFY_NEWMAIL=60
+    NOTIFY_NEWMAIL=60,
+    DH_HELLO=65, DH_HANDSHAKE=66, DH_HANDSHAKE_ACK=67,
+    CERT_REQUEST=70, CERT_RESPONSE=71
 };
 
 
@@ -232,6 +234,61 @@ static inline std::string rsaDecryptFromHex(const std::string &hexCipher,
         out.push_back((char)(m & 0xFF));
     }
     return out;
+}
+
+// --- Certificate Structure for PKI ---
+struct Certificate {
+    std::string identity;           // "Sender" or "Receiver"
+    int address;                    // Network address
+    unsigned long long rsaPublicE;  // RSA public exponent
+    unsigned long long rsaPublicN;  // RSA modulus
+    long dhPublicKey;              // DH public key
+    std::string signature;          // CA's signature (encrypted hash)
+    double timestamp;               // Issue time
+    double validUntil;              // Expiration time
+    
+    Certificate() : address(0), rsaPublicE(0), rsaPublicN(0), dhPublicKey(0), 
+                    timestamp(0), validUntil(0) {}
+};
+
+// Create certificate data string for signing/verification
+static inline std::string certificateDataString(const Certificate& cert) {
+    std::ostringstream oss;
+    oss << cert.identity << ":"
+        << cert.address << ":"
+        << cert.rsaPublicE << ":"
+        << cert.rsaPublicN << ":"
+        << cert.dhPublicKey << ":"
+        << std::fixed << std::setprecision(6) << cert.timestamp;
+    return oss.str();
+}
+
+// Sign certificate with CA's private key
+static inline std::string signCertificate(const Certificate& cert, 
+                                         unsigned long long caPrivateD,
+                                         unsigned long long caPublicN) {
+    std::string dataToSign = certificateDataString(cert);
+    return rsaEncryptToHex(dataToSign, caPrivateD, caPublicN);
+}
+
+// Verify certificate signature with CA's public key
+static inline bool verifyCertificate(const Certificate& cert,
+                                    unsigned long long caPublicE,
+                                    unsigned long long caPublicN,
+                                    double currentTime) {
+    // Check if certificate has expired
+    if (currentTime > cert.validUntil) {
+        return false;
+    }
+    
+    // Verify signature
+    std::string expectedData = certificateDataString(cert);
+    // Use provided CA pubkey if available; otherwise fall back to default CA pubkey (rsaE/rsaN)
+    unsigned long long useE = (caPublicE != 0ULL) ? caPublicE : rsaE();
+    unsigned long long useN = (caPublicN != 0ULL) ? caPublicN : rsaN();
+    std::string decryptedSig = rsaDecryptFromHex(cert.signature, useE, useN);
+    
+    return (decryptedSig == expectedData);
 }
 
 

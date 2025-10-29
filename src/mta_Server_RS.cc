@@ -7,11 +7,21 @@ using namespace omnetpp;
 class MTA_Server_RS : public cSimpleModule {
   private:
     int addr = 0;
+    int caAddr = 950;      // Certificate Authority address (CORRECTED from 900 to 950)
     int mailboxAddr = 700;
     long maxMessageSizeBytes = 1000000;
     
     // RSA Keys
     RSAKeyPair myRSAKeys;
+    
+    // Certificate support
+    bool useCertificates = false;
+    Certificate myCertificate;
+    bool certificateReceived = false;
+    unsigned long long caPublicE = 0;
+    unsigned long long caPublicN = 0;
+    long myDHPriv = 0;
+    long myDHPub = 0;
 
     enum SessionState { STATE_INIT=0, STATE_GREETED, STATE_MAIL, STATE_RCPT, STATE_DATA_PENDING };
     struct SessionContext {
@@ -30,6 +40,9 @@ class MTA_Server_RS : public cSimpleModule {
         // Client's RSA public key
         unsigned long long clientRSAPublicE = 0;
         unsigned long long clientRSAPublicN = 0;
+        // Client's certificate
+        Certificate clientCertificate;
+        bool clientCertValid = false;
     };
     map<long, SessionContext> sessions; // key: client logical addr
   protected:
@@ -46,13 +59,76 @@ void MTA_Server_RS::initialize() {
     addr = par("address");
     if (hasPar("maxMessageSizeBytes")) maxMessageSizeBytes = par("maxMessageSizeBytes");
     
+    // Check if certificates are enabled
+    useCertificates = hasPar("useCertificates") && par("useCertificates").boolValue();
+    
     // Generate RSA key pair
     myRSAKeys = generateRSAKeys();
     EV << "MTA_Server_RS[" << addr << "] Generated RSA keys: n=" << myRSAKeys.n 
        << " e=" << myRSAKeys.e << " d=" << myRSAKeys.d << endl;
+    
+    // Generate DH keys
+    myDHPriv = 54321 + (addr % 1000);
+    myDHPub = toyDH_pub(myDHPriv);
+    
+    // If certificates enabled, request certificate from CA
+    if (useCertificates) {
+        EV << "\n┌─────────────────────────────────────────────────────────┐\n";
+        EV << "│ RECEIVER: Requesting certificate from CA...            │\n";
+        EV << "└─────────────────────────────────────────────────────────┘\n";
+        
+        auto *certReq = mk("CERT_REQUEST", CERT_REQUEST, addr, caAddr);
+        certReq->addPar("identity").setStringValue("Receiver");
+        certReq->addPar("rsa_e").setDoubleValue((double)myRSAKeys.e);
+        certReq->addPar("rsa_n").setDoubleValue((double)myRSAKeys.n);
+        certReq->addPar("dh_pub").setLongValue(myDHPub);
+        
+        send(certReq, "ppp$o", 0);
+    }
 }
 
 void MTA_Server_RS::handleMessage(cMessage *msg) {
+    // Handle certificate response from CA
+    if (msg->getKind() == CERT_RESPONSE) {
+        myCertificate.identity = msg->par("identity").stringValue();
+        myCertificate.address = msg->par("address").longValue();
+        myCertificate.rsaPublicE = (unsigned long long)msg->par("rsa_e").doubleValue();
+        myCertificate.rsaPublicN = (unsigned long long)msg->par("rsa_n").doubleValue();
+        myCertificate.dhPublicKey = msg->par("dh_pub").longValue();
+        myCertificate.signature = msg->par("signature").stringValue();
+        myCertificate.timestamp = msg->par("timestamp").doubleValue();
+        myCertificate.validUntil = msg->par("valid_until").doubleValue();
+        
+        // Store CA's public key for verification
+        caPublicE = (unsigned long long)msg->par("ca_rsa_e").doubleValue();
+        caPublicN = (unsigned long long)msg->par("ca_rsa_n").doubleValue();
+        
+        // VERIFY THIS IS OUR CERTIFICATE!
+        if (myCertificate.address != addr) {
+            EV << "\n╔═══════════════════════════════════════════════════════════╗\n";
+            EV << "║ ✗ ERROR: Received certificate for wrong address!        ║\n";
+            EV << "║ Expected: " << addr << " but got: " << myCertificate.address << "                                     ║\n";
+            EV << "║ Discarding certificate and retrying request...          ║\n";
+            EV << "╚═══════════════════════════════════════════════════════════╝\n\n";
+            delete msg;
+            // Don't retry - just ignore wrong certificate
+            return;
+        }
+        
+        certificateReceived = true;
+        
+        EV << "\n╔═══════════════════════════════════════════════════════════╗\n";
+        EV << "║ ✓ RECEIVER: Certificate received from CA!               ║\n";
+        EV << "╚═══════════════════════════════════════════════════════════╝\n";
+        EV << "Identity: " << myCertificate.identity << "\n";
+        EV << "Address: " << myCertificate.address << "\n";
+        EV << "Signature: " << myCertificate.signature.substr(0, 30) << "...\n";
+        EV << "Valid until: " << myCertificate.validUntil << "\n\n";
+        
+        delete msg;
+        return;
+    }
+    
     if (msg->getKind() == SMTP_CMD) {
         handleSmtpCmd(msg);
         delete msg;
@@ -89,9 +165,44 @@ void MTA_Server_RS::handleSmtpCmd(cMessage* msg) {
     auto &ctx = sessions[client];
     const char* verb = msg->hasPar("verb") ? msg->par("verb").stringValue() : "";
     if (strcmp(verb, "DH_HELLO") == 0) {
+        // If using certificates, verify client's certificate first
+        if (useCertificates && msg->hasPar("has_certificate") && msg->par("has_certificate").boolValue()) {
+            ctx.clientCertificate.identity = msg->par("cert_identity").stringValue();
+            ctx.clientCertificate.address = msg->par("cert_address").longValue();
+            ctx.clientCertificate.rsaPublicE = (unsigned long long)msg->par("rsa_e").doubleValue();
+            ctx.clientCertificate.rsaPublicN = (unsigned long long)msg->par("rsa_n").doubleValue();
+            ctx.clientCertificate.dhPublicKey = msg->par("dh_pub").longValue();
+            ctx.clientCertificate.signature = msg->par("cert_signature").stringValue();
+            ctx.clientCertificate.timestamp = msg->par("cert_timestamp").doubleValue();
+            ctx.clientCertificate.validUntil = msg->par("cert_valid_until").doubleValue();
+            
+            EV << "\n┌─────────────────────────────────────────────────────────┐\n";
+            EV << "│ RECEIVER: Verifying Sender's certificate...            │\n";
+            EV << "└─────────────────────────────────────────────────────────┘\n";
+            
+            // Verify certificate
+            bool certValid = verifyCertificate(ctx.clientCertificate, caPublicE, caPublicN, simTime().dbl());
+            
+            if (!certValid) {
+                EV << "\n╔═══════════════════════════════════════════════════════════╗\n";
+                EV << "║ ✗ CERTIFICATE VERIFICATION FAILED!                       ║\n";
+                EV << "║ Sender's certificate is INVALID or FORGED!               ║\n";
+                EV << "║ Connection REJECTED - Possible MITM attack detected!     ║\n";
+                EV << "╚═══════════════════════════════════════════════════════════╝\n\n";
+                
+                respond(client, 550, "Certificate verification failed", false);
+                return;
+            }
+            
+            ctx.clientCertValid = true;
+            EV << "  ✓ Certificate signature valid\n";
+            EV << "  ✓ Certificate not expired\n";
+            EV << "  ✓ Identity confirmed: " << ctx.clientCertificate.identity << "\n\n";
+        }
+        
         // receive client pub, send our pub back
-        ctx.dhPriv = 54321 + (addr % 1000);
-        ctx.dhPub = toyDH_pub(ctx.dhPriv);
+        ctx.dhPriv = myDHPriv != 0 ? myDHPriv : (54321 + (addr % 1000));
+        ctx.dhPub = myDHPub != 0 ? myDHPub : toyDH_pub(ctx.dhPriv);
         ctx.peerPub = msg->hasPar("dh_pub") ? msg->par("dh_pub").longValue() : 0;
         long shared = toyDH_shared(ctx.dhPriv, ctx.peerPub);
         ctx.sessionKey = keyFromShared(shared);
@@ -113,6 +224,20 @@ void MTA_Server_RS::handleSmtpCmd(cMessage* msg) {
         // SEND SERVER'S RSA PUBLIC KEY
         resp->addPar("rsa_e").setDoubleValue((double)myRSAKeys.e);
         resp->addPar("rsa_n").setDoubleValue((double)myRSAKeys.n);
+        
+        // If using certificates, attach certificate
+        if (useCertificates && certificateReceived) {
+            resp->addPar("has_certificate").setBoolValue(true);
+            resp->addPar("cert_identity").setStringValue(myCertificate.identity.c_str());
+            resp->addPar("cert_address").setLongValue(myCertificate.address);
+            resp->addPar("cert_signature").setStringValue(myCertificate.signature.c_str());
+            resp->addPar("cert_timestamp").setDoubleValue(myCertificate.timestamp);
+            resp->addPar("cert_valid_until").setDoubleValue(myCertificate.validUntil);
+            
+            EV << "\n┌─────────────────────────────────────────────────────────┐\n";
+            EV << "│ RECEIVER: Sending certificate with DH_HANDSHAKE        │\n";
+            EV << "└─────────────────────────────────────────────────────────┘\n\n";
+        }
         
         EV << "MTA_Server_RS[" << addr << "] Sending RSA public key: e=" << myRSAKeys.e 
            << " n=" << myRSAKeys.n << endl;

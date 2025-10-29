@@ -1,42 +1,56 @@
 version 3
-run General-0-20251029-19:59:15-23056
-attr configname General
-attr datetime 20251029-19:59:15
-attr datetimef 20251029-195915
-attr experiment General
+run Scenario1_MITM_Attack-0-20251029-22:36:12-9836
+attr configname Scenario1_MITM_Attack
+attr datetime 20251029-22:36:12
+attr datetimef 20251029-223612
+attr experiment Scenario1_MITM_Attack
 attr inifile omnetpp.ini
 attr iterationvars ""
 attr iterationvarsd ""
 attr iterationvarsf ""
 attr measurement ""
-attr network SimpleNet
-attr processid 23056
+attr network project.SimpleNet
+attr processid 9836
 attr repetition 0
 attr replication #0
 attr resultdir results
 attr runnumber 0
 attr seedset 0
-config network SimpleNet
-config sim-time-limit 2s
-config *.sender.address 1
-config *.router1.routes "\"100:1, 101:2\""
-config *.dns1.address 100
-config *.dns1.answerAddr 101
-config *.mta_Client_S.address 101
-config *.mta_Server_S.address 201
-config *.spool.address 300
-config *.mta_Client_SS.address 401
-config *.router.routes "\"500:1, 600:2\""
-config *.dns.address 500
-config *.dns.answerAddr 600
-config *.mta_Server_RS.address 600
-config *.mailbox.address 700
-config *.maa_Server.address 800
-config *.maa_Client.address 850
-config *.receiver.address 900
-config *.router2.routes "\"950:1, 850:2\""
-config *.dns2.address 950
-config *.dns2.answerAddr 850
+config description "MITM Attack Succeeds "
+config **.useCertificates false
+config **.ca.enabled false
+config **.displayString "\"b=,,rect\""
+config network project.SimpleNet
+config sim-time-limit 100s
+config cmdenv-interactive false
+config cmdenv-express-mode true
+config cmdenv-autoflush true
+config **.vector-recording false
+config **.scalar-recording true
+config **.sender.address 100
+config **.mta_Client_S.address 200
+config **.mta_Server_S.address 300
+config **.spool.address 400
+config **.dns1.address 150
+config **.mta_Client_SS.address 500
+config **.sniffer.address 550
+config **.mta_Server_RS.address 600
+config **.dns.address 650
+config **.mailbox.address 700
+config **.maa_Server.address 800
+config **.maa_Client.address 810
+config **.maa_Client.receiverAddr 850
+config **.receiver.address 850
+config **.receiver.dnsAddr 860
+config **.dns2.address 860
+config **.dns2.answerAddr 810
+config **.ca.address 950
+config **.router.routes "\"500:0, 650:1, 600:2, 950:3\""
+config **.sender.message "\"Test email message\""
+config **.sender.mail_from "\"alice@sender.com\""
+config **.sender.mail_to "\"bob@receiver.com\""
+config **.sender.mail_subject "\"Test Email - Security Demonstration\""
+config **.sender.mail_body "\"This is a test email to demonstrate the Man-in-the-Middle attack and its prevention using certificates.\""
 
 par SimpleNet.mta_Client_S.ppp$o[1].channel typename "\"project.P2P\""
 par SimpleNet.mta_Client_S.ppp$o[1].channel disabled false
@@ -219,6 +233,32 @@ attr unit bps
 par SimpleNet.mta_Server_RS.ppp$o[0].channel ber 0
 attr mutable ""
 par SimpleNet.mta_Server_RS.ppp$o[0].channel per 0
+attr mutable ""
+par SimpleNet.ca.ppp$o.channel typename "\"project.P2P\""
+par SimpleNet.ca.ppp$o.channel disabled false
+attr mutable ""
+par SimpleNet.ca.ppp$o.channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.ca.ppp$o.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.ca.ppp$o.channel ber 0
+attr mutable ""
+par SimpleNet.ca.ppp$o.channel per 0
+attr mutable ""
+par SimpleNet.router.pppg$o[3].channel typename "\"project.P2P\""
+par SimpleNet.router.pppg$o[3].channel disabled false
+attr mutable ""
+par SimpleNet.router.pppg$o[3].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.router.pppg$o[3].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.router.pppg$o[3].channel ber 0
+attr mutable ""
+par SimpleNet.router.pppg$o[3].channel per 0
 attr mutable ""
 par SimpleNet.mta_Server_RS.ppp$o[1].channel typename "\"project.P2P\""
 par SimpleNet.mta_Server_RS.ppp$o[1].channel disabled false
@@ -455,52 +495,61 @@ attr mutable ""
 par SimpleNet.dns2.ppp$o.channel per 0
 attr mutable ""
 par SimpleNet.spool typename "\"project.spool\""
-par SimpleNet.spool address 300
+par SimpleNet.spool address 400
 par SimpleNet.mta_Client_SS typename "\"project.MTA_Client_SS\""
-par SimpleNet.mta_Client_SS address 401
+par SimpleNet.mta_Client_SS address 500
+par SimpleNet.mta_Client_SS useCertificates false
 par SimpleNet.router typename "\"project.Router\""
-par SimpleNet.router routes "\"500:1, 600:2\""
+par SimpleNet.router routes "\"500:0, 650:1, 600:2, 950:3\""
 par SimpleNet.router enableAttack false
 par SimpleNet.router attackCmd "\"\""
 par SimpleNet.dns typename "\"project.DNS\""
-par SimpleNet.dns address 500
-par SimpleNet.dns answerAddr 600
+par SimpleNet.dns address 650
+par SimpleNet.dns answerAddr 3
 par SimpleNet.mta_Server_RS typename "\"project.MTA_Server_RS\""
 par SimpleNet.mta_Server_RS address 600
 par SimpleNet.mta_Server_RS maxMessageSizeBytes 2000000
+par SimpleNet.mta_Server_RS useCertificates false
 par SimpleNet.mailbox typename "\"project.mailbox\""
 par SimpleNet.mailbox address 700
 par SimpleNet.maa_Server typename "\"project.MAA_Server\""
 par SimpleNet.maa_Server address 800
 par SimpleNet.maa_Client typename "\"project.MAA_Client\""
-par SimpleNet.maa_Client address 850
+par SimpleNet.maa_Client address 810
+par SimpleNet.maa_Client receiverAddr 850
 par SimpleNet.receiver typename "\"project.Receiver\""
-par SimpleNet.receiver address 900
+par SimpleNet.receiver address 850
+par SimpleNet.receiver dnsAddr 860
 par SimpleNet.sender typename "\"project.Sender\""
-par SimpleNet.sender address 1
-par SimpleNet.sender message "\"Hello from Sender\""
-par SimpleNet.sender mail_from "\"alice@example.com\""
-par SimpleNet.sender mail_to "\"bob@example.com\""
-par SimpleNet.sender mail_subject "\"Greetings\""
-par SimpleNet.sender mail_body "\"This is the body.\""
+par SimpleNet.sender address 100
+par SimpleNet.sender message "\"Test email message\""
+par SimpleNet.sender mail_from "\"alice@sender.com\""
+par SimpleNet.sender mail_to "\"bob@receiver.com\""
+par SimpleNet.sender mail_subject "\"Test Email - Security Demonstration\""
+par SimpleNet.sender mail_body "\"This is a test email to demonstrate the Man-in-the-Middle attack and its prevention using certificates.\""
 par SimpleNet.mta_Client_S typename "\"project.MTA_Client_S\""
-par SimpleNet.mta_Client_S address 101
+par SimpleNet.mta_Client_S address 200
 par SimpleNet.mta_Server_S typename "\"project.MTA_Server_S\""
-par SimpleNet.mta_Server_S address 201
+par SimpleNet.mta_Server_S address 300
 par SimpleNet.router1 typename "\"project.Router\""
-par SimpleNet.router1 routes "\"100:1, 101:2\""
+par SimpleNet.router1 routes "\"\""
 par SimpleNet.router1 enableAttack false
 par SimpleNet.router1 attackCmd "\"\""
 par SimpleNet.router2 typename "\"project.Router\""
-par SimpleNet.router2 routes "\"950:1, 850:2\""
+par SimpleNet.router2 routes "\"\""
 par SimpleNet.router2 enableAttack false
 par SimpleNet.router2 attackCmd "\"\""
 par SimpleNet.dns1 typename "\"project.DNS\""
-par SimpleNet.dns1 address 100
-par SimpleNet.dns1 answerAddr 101
+par SimpleNet.dns1 address 150
+par SimpleNet.dns1 answerAddr 3
 par SimpleNet.dns2 typename "\"project.DNS\""
-par SimpleNet.dns2 address 950
-par SimpleNet.dns2 answerAddr 850
+par SimpleNet.dns2 address 860
+par SimpleNet.dns2 answerAddr 810
 par SimpleNet.sniffer typename "\"project.MaliciousSniffer\""
+par SimpleNet.ca typename "\"project.CA\""
+par SimpleNet.ca address 950
+par SimpleNet.ca enabled false
+par SimpleNet.ca certificateValidityPeriod 3600s
+attr unit s
 par SimpleNet typename "\"project.SimpleNet\""
 

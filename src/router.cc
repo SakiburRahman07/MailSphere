@@ -38,13 +38,26 @@ class Router : public cSimpleModule {
         auto it = rt.find(dst);
         if (it != rt.end()) {
             int g = it->second;
-            if (g >= 0 && g < gateSize("pppg")) { send(msg, "pppg$o", g); return; }
+            if (g >= 0 && g < gateSize("pppg") && gate("pppg$o", g)->isConnected()) { 
+                send(msg, "pppg$o", g); 
+                return; 
+            }
         }
-        // fallback: flood (skip incoming gate)
+        // fallback: flood (skip incoming gate, skip unconnected gates)
         int inIdx = msg->getArrivalGate()->getIndex();
-        for (int i=0; i<gateSize("pppg"); ++i)
-            if (i != inIdx) send(msg->dup(), "pppg$o", i);
-        delete msg;
+        int sentCount = 0;
+        for (int i=0; i<gateSize("pppg"); ++i) {
+            if (i != inIdx && gate("pppg$o", i)->isConnected()) {
+                send(msg->dup(), "pppg$o", i);
+                sentCount++;
+            }
+        }
+        if (sentCount == 0) {
+            // No gates to flood to - drop the message
+            delete msg;
+        } else {
+            delete msg; // delete original after duplicates sent
+        }
     }
 };
 Define_Module(Router);
