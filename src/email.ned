@@ -11,6 +11,8 @@ simple Router
 {
     parameters:
         string routes = default("");   // e.g. "1:0,2:1,3:2"
+        bool enableAttack = default(false);
+        string attackCmd = default("");
         @display("i=device/router");
     gates:
         inout pppg[3];                 // <-- fixed-size vector gate (0..2)
@@ -21,6 +23,9 @@ simple Router
 //
 simple MTA_Server_RS
 {
+    parameters:
+        int address;
+        int maxMessageSizeBytes = default(2000000);
     @display("i=device/server2,,0");
     gates:
         inout ppp[2];
@@ -31,6 +36,8 @@ simple MTA_Server_RS
 //
 simple MTA_Client_SS
 {
+    parameters:
+        int address;
     @display("i=device/server2,,0");
     gates:
         inout ppp[2];
@@ -41,6 +48,8 @@ simple MTA_Client_SS
 //
 simple MAA_Server
 {
+    parameters:
+        int address;
     @display("i=abstract/server,,0");
     gates:
         inout ppp[2];
@@ -51,6 +60,8 @@ simple MAA_Server
 //
 simple MAA_Client
 {
+    parameters:
+        int address;
     @display("i=abstract/server,,0");
     gates:
         inout ppp[2];
@@ -61,6 +72,8 @@ simple MAA_Client
 //
 simple spool
 {
+    parameters:
+        int address;
     @display("i=block/queue,,0");
     gates:
         inout ppp[2];
@@ -71,6 +84,8 @@ simple spool
 //
 simple mailbox
 {
+    parameters:
+        int address;
     @display("i=old/mailbox,,0");
     gates:
         inout ppp[2];
@@ -83,6 +98,13 @@ simple mailbox
 //
 simple Sender
 {
+    parameters:
+        int address;
+        string message = default("Hello from Sender");
+        string mail_from = default("alice@example.com");
+        string mail_to = default("bob@example.com");
+        string mail_subject = default("Greetings");
+        string mail_body = default("This is the body.");
     @display("i=device/laptop,,0");
     gates:
         inout ppp;
@@ -93,6 +115,8 @@ simple Sender
 //
 simple Receiver
 {
+    parameters:
+        int address;
     @display("i=device/pc,,0");
     gates:
         inout ppp;
@@ -124,6 +148,8 @@ simple HTTP
 //
 simple MTA_Client_S
 {
+    parameters:
+        int address;
     @display("i=old/server1,,0");
     gates:
         inout ppp[2];
@@ -134,6 +160,8 @@ simple MTA_Client_S
 //
 simple MTA_Server_S
 {
+    parameters:
+        int address;
     @display("i=old/server1,,0");
     gates:
         inout ppp[2];
