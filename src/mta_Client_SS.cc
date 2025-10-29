@@ -122,14 +122,11 @@ void MTA_Client_SS::sendCmd(const char* verb, long dst) {
 void MTA_Client_SS::sendMailFrom(long dst) {
     auto *m = mk("SMTP_CMD", SMTP_CMD, addr, dst);
     m->addPar("verb").setStringValue("MAIL");
-    if (!sessionKey.empty()) {
-        auto enc = toHex(xorEncrypt(mailFrom, sessionKey));
-        m->addPar("from").setStringValue(enc.c_str());
-        m->addPar("enc").setBoolValue(true);
-        m->addPar("enc_fmt").setStringValue("hex");
-    } else {
-        m->addPar("from").setStringValue(mailFrom.c_str());
-    }
+    // Use RSA public key for sender encryption (same as recipient)
+    auto encFrom = rsaEncryptToHex(mailFrom);
+    m->addPar("from").setStringValue(encFrom.c_str());
+    m->addPar("enc").setBoolValue(true);
+    m->addPar("enc_fmt").setStringValue("rsahex");
     m->addPar("size").setLongValue(declaredSize);
     send(m, "ppp$o", 1);
 }

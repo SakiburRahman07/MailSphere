@@ -38,7 +38,9 @@ void mailbox::handleMessage(cMessage *msg) {
             if (m->hasPar("enc_fmt")) resp->addPar("enc_fmt").setStringValue(m->par("enc_fmt").stringValue());
             if (m->hasPar("content")) resp->addPar("content").setStringValue(m->par("content").stringValue());
             if (m->hasPar("mail_from")) resp->addPar("mail_from").setStringValue(m->par("mail_from").stringValue());
+            if (m->hasPar("mail_from_fmt")) resp->addPar("mail_from_fmt").setStringValue(m->par("mail_from_fmt").stringValue());
             if (m->hasPar("mail_to")) resp->addPar("mail_to").setStringValue(m->par("mail_to").stringValue());
+            if (m->hasPar("mail_to_fmt")) resp->addPar("mail_to_fmt").setStringValue(m->par("mail_to_fmt").stringValue());
             if (m->hasPar("mail_subject")) resp->addPar("mail_subject").setStringValue(m->par("mail_subject").stringValue());
             if (m->hasPar("mail_body")) resp->addPar("mail_body").setStringValue(m->par("mail_body").stringValue());
             send(resp, "ppp$o", 1);

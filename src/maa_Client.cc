@@ -34,7 +34,9 @@ void MAA_Client::handleMessage(cMessage *msg) {
         if (msg->hasPar("enc_key")) toRx->addPar("enc_key").setStringValue(msg->par("enc_key").stringValue());
         if (msg->hasPar("content")) toRx->addPar("content").setStringValue(msg->par("content").stringValue());
         if (msg->hasPar("mail_from")) toRx->addPar("mail_from").setStringValue(msg->par("mail_from").stringValue());
+        if (msg->hasPar("mail_from_fmt")) toRx->addPar("mail_from_fmt").setStringValue(msg->par("mail_from_fmt").stringValue());
         if (msg->hasPar("mail_to")) toRx->addPar("mail_to").setStringValue(msg->par("mail_to").stringValue());
+        if (msg->hasPar("mail_to_fmt")) toRx->addPar("mail_to_fmt").setStringValue(msg->par("mail_to_fmt").stringValue());
         if (msg->hasPar("mail_subject")) toRx->addPar("mail_subject").setStringValue(msg->par("mail_subject").stringValue());
         if (msg->hasPar("mail_body")) toRx->addPar("mail_body").setStringValue(msg->par("mail_body").stringValue());
         send(toRx, "ppp$o", 1);

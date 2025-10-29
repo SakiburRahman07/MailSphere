@@ -54,7 +54,9 @@ void MAA_Server::handleMessage(cMessage *msg) {
         // Forward original values; Receiver will RSA-decrypt
         if (msg->hasPar("content")) resp->addPar("content").setStringValue(msg->par("content").stringValue());
         if (msg->hasPar("mail_from")) resp->addPar("mail_from").setStringValue(msg->par("mail_from").stringValue());
+        if (msg->hasPar("mail_from_fmt")) resp->addPar("mail_from_fmt").setStringValue(msg->par("mail_from_fmt").stringValue());
         if (msg->hasPar("mail_to")) resp->addPar("mail_to").setStringValue(msg->par("mail_to").stringValue());
+        if (msg->hasPar("mail_to_fmt")) resp->addPar("mail_to_fmt").setStringValue(msg->par("mail_to_fmt").stringValue());
         if (msg->hasPar("mail_subject")) resp->addPar("mail_subject").setStringValue(msg->par("mail_subject").stringValue());
         if (msg->hasPar("mail_body")) resp->addPar("mail_body").setStringValue(msg->par("mail_body").stringValue());
         send(resp, "ppp$o", 1);

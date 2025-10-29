@@ -15,7 +15,9 @@ class MTA_Server_RS : public cSimpleModule {
         SessionState state = STATE_INIT;
         string heloName;
         string mailFrom;
+        string mailFromFmt; // remembers how MAIL FROM was encoded
         string rcptTo;
+        string rcptToFmt;   // remembers how RCPT TO was encoded
         long declaredSize = -1;
         // toy DH
         long dhPriv = 0;
@@ -99,6 +101,7 @@ void MTA_Server_RS::handleSmtpCmd(cMessage* msg) {
         if (ctx.state < STATE_GREETED) { respond(client, 503, "bad sequence", false); return; }
         // Store as-received (may be encrypted). Decryption will be deferred until fetch time.
         ctx.mailFrom = msg->hasPar("from") ? msg->par("from").stringValue() : "";
+        ctx.mailFromFmt = msg->hasPar("enc_fmt") ? msg->par("enc_fmt").stringValue() : "";
         ctx.declaredSize = msg->hasPar("size") ? msg->par("size").longValue() : -1;
         if (ctx.declaredSize >= 0 && ctx.declaredSize > maxMessageSizeBytes) { respond(client, 552, "message too big", false); return; }
         ctx.state = STATE_MAIL;
@@ -109,6 +112,7 @@ void MTA_Server_RS::handleSmtpCmd(cMessage* msg) {
         if (ctx.state < STATE_MAIL) { respond(client, 503, "bad sequence", false); return; }
         // Store as-received (may be encrypted). Decryption will be deferred until fetch time.
         ctx.rcptTo = msg->hasPar("to") ? msg->par("to").stringValue() : "";
+        ctx.rcptToFmt = msg->hasPar("enc_fmt") ? msg->par("enc_fmt").stringValue() : "";
         // Accept recipient; could add 550/551/553 here
         ctx.state = STATE_RCPT;
         respond(client, 250, "ok", false);
@@ -131,7 +135,9 @@ void MTA_Server_RS::handleSmtpCmd(cMessage* msg) {
         if (!ctx.sessionKey.empty()) toMb->addPar("enc_key").setStringValue(ctx.sessionKey.c_str());
         if (msg->hasPar("content")) toMb->addPar("content").setStringValue(msg->par("content").stringValue());
         if (!ctx.mailFrom.empty()) toMb->addPar("mail_from").setStringValue(ctx.mailFrom.c_str());
+        if (!ctx.mailFromFmt.empty()) toMb->addPar("mail_from_fmt").setStringValue(ctx.mailFromFmt.c_str());
         if (!ctx.rcptTo.empty()) toMb->addPar("mail_to").setStringValue(ctx.rcptTo.c_str());
+        if (!ctx.rcptToFmt.empty()) toMb->addPar("mail_to_fmt").setStringValue(ctx.rcptToFmt.c_str());
         if (msg->hasPar("mail_subject")) toMb->addPar("mail_subject").setStringValue(msg->par("mail_subject").stringValue());
         if (msg->hasPar("mail_body")) toMb->addPar("mail_body").setStringValue(msg->par("mail_body").stringValue());
         send(toMb, "ppp$o", 1);
