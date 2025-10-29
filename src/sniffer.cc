@@ -197,6 +197,12 @@ class MaliciousSniffer : public cSimpleModule {
     
     void handleMessage(cMessage *msg) override {
         packetsIntercepted++;
+        
+        EV << "Sniffer: Received message kind=" << msg->getKind() 
+           << " name=" << msg->getName()
+           << " src=" << SRC(msg) << " dst=" << DST(msg)
+           << " (CERT_REQUEST=" << CERT_REQUEST << ", CERT_RESPONSE=" << CERT_RESPONSE << ")\n";
+        
         cGate *arrivalGate = msg->getArrivalGate();
         int arrivalIndex = arrivalGate->getIndex();
         int outGateIndex = (arrivalIndex == 0) ? 1 : 0;
@@ -210,24 +216,11 @@ class MaliciousSniffer : public cSimpleModule {
         
         // ALWAYS forward certificate-related messages unmodified
         // These are part of the certificate infrastructure and should not be tampered with
-        if (msg->getKind() == 70 || msg->getKind() == 71) {  // CERT_REQUEST=70, CERT_RESPONSE=71
-            // For CERT_RESPONSE coming from router (arrivalIndex=1), check destination address
-            // Only forward if it's intended for mta_Client_SS (500)
-            if (msg->getKind() == 71 && arrivalIndex == 1) {
-                long destAddr = DST(msg);
-                if (destAddr != 500) {
-                    // This certificate response is NOT for mta_Client_SS (500)
-                    // Drop it - it's for another module (e.g., mta_Server_RS at 600)
-                    EV << "[CERTIFICATE INFRASTRUCTURE] Dropping CERT_RESPONSE for address " 
-                       << destAddr << " (not for mta_Client_SS)\n";
-                    delete msg;
-                    return;
-                }
-            }
-            
+        if (msg->getKind() == CERT_REQUEST || msg->getKind() == CERT_RESPONSE) {
             EV << "[CERTIFICATE INFRASTRUCTURE] Forwarding " 
-               << (msg->getKind() == 70 ? "CERT_REQUEST" : "CERT_RESPONSE") 
-               << " unmodified\n";
+               << (msg->getKind() == CERT_REQUEST ? "CERT_REQUEST" : "CERT_RESPONSE") 
+               << " unmodified (from gate " << arrivalIndex << " to gate " << outGateIndex 
+               << ", dst=" << DST(msg) << ")\n";
             send(msg, "ppp$o", outGateIndex);
             return;
         }

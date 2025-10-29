@@ -9,7 +9,7 @@ class MTA_Client_SS : public cSimpleModule {
     int caAddr = 950;      // Certificate Authority address (CORRECTED from 900 to 950)
     const char* serverQName = "mta_server_rs";
     long pendingSmtpDst = -1;
-    enum State { IDLE=0, RESOLVING, CERT_REQUEST, CERT_WAIT, DH_HANDSHAKE, GREETING, ENVELOPE_FROM, ENVELOPE_RCPT, DATA_CMD, DATA_BODY, DONE, RETRY_WAIT };
+    enum State { IDLE=0, RESOLVING, STATE_CERT_REQUEST, STATE_CERT_WAIT, DH_HANDSHAKE, GREETING, ENVELOPE_FROM, ENVELOPE_RCPT, DATA_CMD, DATA_BODY, DONE, RETRY_WAIT };
     State state = IDLE;
     std::string content;
     std::string mailFrom, mailTo, mailSubject, mailBody;
@@ -74,13 +74,17 @@ void MTA_Client_SS::initialize() {
         certReq->addPar("dh_pub").setLongValue(dhPub);
         
         send(certReq, "ppp$o", 1);
-        state = CERT_REQUEST;
+        state = STATE_CERT_REQUEST;
     }
 }
 
 void MTA_Client_SS::handleMessage(cMessage *msg) {
+    EV << "MTA_Client_SS: Received message kind=" << msg->getKind() << " name=" << msg->getName() 
+       << " (CERT_RESPONSE=" << CERT_RESPONSE << ")\n";
+    
     // Handle certificate response from CA
     if (msg->getKind() == CERT_RESPONSE) {
+        EV << "MTA_Client_SS: Processing CERT_RESPONSE from CA\n";
         myCertificate.identity = msg->par("identity").stringValue();
         myCertificate.address = msg->par("address").longValue();
         myCertificate.rsaPublicE = (unsigned long long)msg->par("rsa_e").doubleValue();

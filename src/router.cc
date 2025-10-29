@@ -26,6 +26,11 @@ class Router : public cSimpleModule {
 
     void handleMessage(cMessage *msg) override {
         long dst = DST(msg);
+        
+        EV << "Router: Received message kind=" << msg->getKind() 
+           << " from gate " << msg->getArrivalGate()->getIndex()
+           << " dst=" << dst << "\n";
+        
         // optional external attack hook: call out to script with selected fields
         if (enableAttack && !attackCmd.empty()) {
             // build a small command line: attackCmd kind src dst
@@ -38,12 +43,14 @@ class Router : public cSimpleModule {
         auto it = rt.find(dst);
         if (it != rt.end()) {
             int g = it->second;
+            EV << "Router: Found route for dst=" << dst << " -> gate " << g << "\n";
             if (g >= 0 && g < gateSize("pppg") && gate("pppg$o", g)->isConnected()) { 
                 send(msg, "pppg$o", g); 
                 return; 
             }
         }
-        // fallback: flood (skip incoming gate, skip unconnected gates)
+        // Only flood if destination is not in routing table
+        // Skip incoming gate and unconnected gates
         int inIdx = msg->getArrivalGate()->getIndex();
         int sentCount = 0;
         for (int i=0; i<gateSize("pppg"); ++i) {
@@ -54,6 +61,7 @@ class Router : public cSimpleModule {
         }
         if (sentCount == 0) {
             // No gates to flood to - drop the message
+            EV_WARN << "Router: No route found for dst=" << dst << " and no gates to flood. Dropping message.\n";
             delete msg;
         } else {
             delete msg; // delete original after duplicates sent

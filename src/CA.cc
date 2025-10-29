@@ -11,6 +11,8 @@ class CA : public cSimpleModule {
     RSAKeyPair caRSAKeys;  // CA's own RSA keys for signing
     std::map<int, Certificate> issuedCertificates;  // address -> certificate
     bool enabled = true;  // Can be disabled for Scenario 1
+    int requestsReceived = 0;  // Counter for debugging
+    int responseSent = 0;      // Counter for debugging
     
   protected:
     void initialize() override {
@@ -55,7 +57,7 @@ class CA : public cSimpleModule {
         
         EV << "CA: Received message kind=" << msg->getKind() << " name=" << msg->getName() << "\n";
         
-        if (msg->getKind() == 70) {  // CERT_REQUEST
+        if (msg->getKind() == CERT_REQUEST) {  // Use constant instead of hardcoded 70
             handleCertificateRequest(msg);
         } else {
             EV << "CA: Ignoring message with kind=" << msg->getKind() << "\n";
@@ -64,6 +66,8 @@ class CA : public cSimpleModule {
     }
     
     void handleCertificateRequest(cMessage *msg) {
+        requestsReceived++;
+        
         int requestorAddr = msg->par("src").longValue();
         std::string identity = msg->par("identity").stringValue();
         unsigned long long rsaE = (unsigned long long)msg->par("rsa_e").doubleValue();
@@ -71,7 +75,7 @@ class CA : public cSimpleModule {
         unsigned long long dhPub = msg->par("dh_pub").longValue();
         
         EV << "\n┌─────────────────────────────────────────────────────────┐\n";
-        EV << "│ CA: Received Certificate Request                        │\n";
+        EV << "│ CA: Received Certificate Request #" << requestsReceived << "                       │\n";
         EV << "└─────────────────────────────────────────────────────────┘\n";
         EV << "From: " << identity << " (address " << requestorAddr << ")\n";
         EV << "RSA Public Key: e=" << rsaE << " n=" << rsaN << "\n";
@@ -98,7 +102,7 @@ class CA : public cSimpleModule {
         EV << "  Valid until: " << cert.validUntil << "\n\n";
         
         // Send certificate back
-        auto *resp = mk("CERT_RESPONSE", 71, addr, requestorAddr);
+        auto *resp = mk("CERT_RESPONSE", CERT_RESPONSE, addr, requestorAddr);  // Use constant instead of hardcoded 71
         resp->addPar("identity").setStringValue(cert.identity.c_str());
         resp->addPar("address").setLongValue(cert.address);  // Add address field
         resp->addPar("rsa_e").setDoubleValue((double)cert.rsaPublicE);
@@ -110,11 +114,18 @@ class CA : public cSimpleModule {
         resp->addPar("timestamp").setDoubleValue(cert.timestamp);
         resp->addPar("valid_until").setDoubleValue(cert.validUntil);
         
+        EV << "CA: Preparing to send certificate response...\n";
+        EV << "  From (CA): " << addr << "\n";
+        EV << "  To: " << requestorAddr << "\n";
+        EV << "  Message kind: " << resp->getKind() << " (CERT_RESPONSE=" << CERT_RESPONSE << ")\n";
+        
         // Find the gate to send response
         cGate *gateOut = gate("ppp$o");
         send(resp, gateOut);
+        responseSent++;
         
-        EV << "CA: Certificate sent to " << identity << "\n\n";
+        EV << "CA: Certificate #" << responseSent << " successfully sent to " << identity << " at address " << requestorAddr << "\n";
+        EV << "CA: Total requests received: " << requestsReceived << ", responses sent: " << responseSent << "\n\n";
     }
 };
 

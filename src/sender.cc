@@ -24,8 +24,8 @@ void Sender::initialize() {
     mailTo = par("mail_to").stdstringValue();
     mailSubject = par("mail_subject").stdstringValue();
     mailBody = par("mail_body").stdstringValue();
-    // assume dns1 reachable via Router1 based on addressing; set logical address
-    dnsAddr = 100; // will be configured in ini via routes; used as dst
+    // DNS1 is at address 150 (configured in omnetpp.ini)
+    dnsAddr = 150; // Fixed: was incorrectly set to 100 (sender's own address)
     // Kick off DNS query for MTA_Client_S
     auto *q = mk("DNS_QUERY", DNS_QUERY, addr, dnsAddr);
     q->addPar("qname").setStringValue(mtaQName);
