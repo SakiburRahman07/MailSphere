@@ -1,8 +1,8 @@
 version 3
-run Scenario2_With_Certificates-0-20251030-01:53:00-13504
+run Scenario2_With_Certificates-0-20251030-08:02:12-22596
 attr configname Scenario2_With_Certificates
-attr datetime 20251030-01:53:00
-attr datetimef 20251030-015300
+attr datetime 20251030-08:02:12
+attr datetimef 20251030-080212
 attr experiment Scenario2_With_Certificates
 attr inifile omnetpp.ini
 attr iterationvars ""
@@ -10,7 +10,7 @@ attr iterationvarsd ""
 attr iterationvarsf ""
 attr measurement ""
 attr network project.SimpleNet
-attr processid 13504
+attr processid 22596
 attr repetition 0
 attr replication #0
 attr resultdir results
