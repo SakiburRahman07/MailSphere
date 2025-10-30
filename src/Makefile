@@ -32,6 +32,7 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
 OBJS = \
+    $O/CA.o \
     $O/dns.o \
     $O/http.o \
     $O/maa_Client.o \
@@ -45,6 +46,7 @@ OBJS = \
     $O/receiver.o \
     $O/router.o \
     $O/sender.o \
+    $O/sniffer.o \
     $O/spool.o
 
 # Message files

@@ -30,7 +30,9 @@ class DNS : public cSimpleModule {
             if (msg->hasPar("mail_body")) resp->addPar("mail_body").setStringValue(msg->par("mail_body").stringValue());
             send(resp, "ppp$o");
         } else {
-            EV_WARN << "DNS unexpected kind=" << msg->getKind() << "\n";
+            // Silently ignore messages not meant for DNS (caused by router flooding)
+            // Common cases: HTTP_RESPONSE, SMTP messages, etc.
+            EV_DEBUG << "DNS ignoring message kind=" << msg->getKind() << " (not a DNS_QUERY)\n";
         }
         delete msg;
     }

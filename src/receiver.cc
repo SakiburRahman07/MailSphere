@@ -16,6 +16,7 @@ Define_Module(Receiver);
 // ---- Implementations ----
 void Receiver::initialize() {
     addr = par("address");
+    dnsAddr = hasPar("dnsAddr") ? (int)par("dnsAddr").intValue() : 950;
     auto *q = mk("DNS_QUERY", DNS_QUERY, addr, dnsAddr);
     q->addPar("qname").setStringValue("maa_client");
     send(q, "ppp$o");

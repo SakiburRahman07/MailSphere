@@ -1,0 +1,559 @@
+version 3
+run Scenario2_With_Certificates-0-20251030-01:53:00-13504
+attr configname Scenario2_With_Certificates
+attr datetime 20251030-01:53:00
+attr datetimef 20251030-015300
+attr experiment Scenario2_With_Certificates
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsd ""
+attr iterationvarsf ""
+attr measurement ""
+attr network project.SimpleNet
+attr processid 13504
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+config description "Certificate Verification Enabled"
+config **.useCertificates true
+config **.ca.enabled true
+config **.ca.certificateValidityPeriod 3600s
+config **.displayString "\"b=,,rect\""
+config network project.SimpleNet
+config sim-time-limit 100s
+config cmdenv-interactive false
+config cmdenv-express-mode true
+config cmdenv-autoflush true
+config **.vector-recording false
+config **.scalar-recording true
+config **.sender.address 100
+config **.mta_Client_S.address 200
+config **.mta_Server_S.address 300
+config **.spool.address 400
+config **.dns1.address 150
+config **.dns1.answerAddr 200
+config **.mta_Client_SS.address 500
+config **.sniffer.address 550
+config **.mta_Server_RS.address 600
+config **.dns.address 650
+config **.mailbox.address 700
+config **.maa_Server.address 800
+config **.maa_Client.address 810
+config **.maa_Client.receiverAddr 850
+config **.receiver.address 850
+config **.receiver.dnsAddr 860
+config **.dns2.address 860
+config **.dns2.answerAddr 810
+config **.ca.address 950
+config **.router1.routes "\"100:0, 150:1, 200:2\""
+config **.router.routes "\"550:0, 500:0, 400:0, 300:0, 200:0, 650:1, 600:2, 700:2, 800:2, 810:2, 950:3\""
+config **.router2.routes "\"850:0, 860:1, 810:2, 800:2, 700:2, 600:2\""
+config **.sender.message "\"Test email message\""
+config **.sender.mail_from "\"alice@sender.com\""
+config **.sender.mail_to "\"bob@receiver.com\""
+config **.sender.mail_subject "\"Test Email - Security Demonstration\""
+config **.sender.mail_body "\"This is a test email to demonstrate the Man-in-the-Middle attack and its prevention using certificates.\""
+
+par SimpleNet.mta_Client_S.ppp$o[1].channel typename "\"project.P2P\""
+par SimpleNet.mta_Client_S.ppp$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.mta_Client_S.ppp$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.mta_Client_S.ppp$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.mta_Client_S.ppp$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.mta_Client_S.ppp$o[1].channel per 0
+attr mutable ""
+par SimpleNet.mta_Server_S.ppp$o[0].channel typename "\"project.P2P\""
+par SimpleNet.mta_Server_S.ppp$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.mta_Server_S.ppp$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.mta_Server_S.ppp$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.mta_Server_S.ppp$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.mta_Server_S.ppp$o[0].channel per 0
+attr mutable ""
+par SimpleNet.mta_Server_S.ppp$o[1].channel typename "\"project.P2P\""
+par SimpleNet.mta_Server_S.ppp$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.mta_Server_S.ppp$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.mta_Server_S.ppp$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.mta_Server_S.ppp$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.mta_Server_S.ppp$o[1].channel per 0
+attr mutable ""
+par SimpleNet.spool.ppp$o[0].channel typename "\"project.P2P\""
+par SimpleNet.spool.ppp$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.spool.ppp$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.spool.ppp$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.spool.ppp$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.spool.ppp$o[0].channel per 0
+attr mutable ""
+par SimpleNet.spool.ppp$o[1].channel typename "\"project.P2P\""
+par SimpleNet.spool.ppp$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.spool.ppp$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.spool.ppp$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.spool.ppp$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.spool.ppp$o[1].channel per 0
+attr mutable ""
+par SimpleNet.mta_Client_SS.ppp$o[0].channel typename "\"project.P2P\""
+par SimpleNet.mta_Client_SS.ppp$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.mta_Client_SS.ppp$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.mta_Client_SS.ppp$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.mta_Client_SS.ppp$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.mta_Client_SS.ppp$o[0].channel per 0
+attr mutable ""
+par SimpleNet.mta_Client_SS.ppp$o[1].channel typename "\"project.P2P\""
+par SimpleNet.mta_Client_SS.ppp$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.mta_Client_SS.ppp$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.mta_Client_SS.ppp$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.mta_Client_SS.ppp$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.mta_Client_SS.ppp$o[1].channel per 0
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[0].channel typename "\"project.P2P\""
+par SimpleNet.sniffer.ppp$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.sniffer.ppp$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.sniffer.ppp$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[0].channel per 0
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[1].channel typename "\"project.P2P\""
+par SimpleNet.sniffer.ppp$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.sniffer.ppp$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.sniffer.ppp$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.sniffer.ppp$o[1].channel per 0
+attr mutable ""
+par SimpleNet.router.pppg$o[0].channel typename "\"project.P2P\""
+par SimpleNet.router.pppg$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.router.pppg$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.router.pppg$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.router.pppg$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.router.pppg$o[0].channel per 0
+attr mutable ""
+par SimpleNet.router.pppg$o[1].channel typename "\"project.P2P\""
+par SimpleNet.router.pppg$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.router.pppg$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.router.pppg$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.router.pppg$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.router.pppg$o[1].channel per 0
+attr mutable ""
+par SimpleNet.dns.ppp$o.channel typename "\"project.P2P\""
+par SimpleNet.dns.ppp$o.channel disabled false
+attr mutable ""
+par SimpleNet.dns.ppp$o.channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.dns.ppp$o.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.dns.ppp$o.channel ber 0
+attr mutable ""
+par SimpleNet.dns.ppp$o.channel per 0
+attr mutable ""
+par SimpleNet.router.pppg$o[2].channel typename "\"project.P2P\""
+par SimpleNet.router.pppg$o[2].channel disabled false
+attr mutable ""
+par SimpleNet.router.pppg$o[2].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.router.pppg$o[2].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.router.pppg$o[2].channel ber 0
+attr mutable ""
+par SimpleNet.router.pppg$o[2].channel per 0
+attr mutable ""
+par SimpleNet.mta_Server_RS.ppp$o[0].channel typename "\"project.P2P\""
+par SimpleNet.mta_Server_RS.ppp$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.mta_Server_RS.ppp$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.mta_Server_RS.ppp$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.mta_Server_RS.ppp$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.mta_Server_RS.ppp$o[0].channel per 0
+attr mutable ""
+par SimpleNet.ca.ppp$o.channel typename "\"project.P2P\""
+par SimpleNet.ca.ppp$o.channel disabled false
+attr mutable ""
+par SimpleNet.ca.ppp$o.channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.ca.ppp$o.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.ca.ppp$o.channel ber 0
+attr mutable ""
+par SimpleNet.ca.ppp$o.channel per 0
+attr mutable ""
+par SimpleNet.router.pppg$o[3].channel typename "\"project.P2P\""
+par SimpleNet.router.pppg$o[3].channel disabled false
+attr mutable ""
+par SimpleNet.router.pppg$o[3].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.router.pppg$o[3].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.router.pppg$o[3].channel ber 0
+attr mutable ""
+par SimpleNet.router.pppg$o[3].channel per 0
+attr mutable ""
+par SimpleNet.mta_Server_RS.ppp$o[1].channel typename "\"project.P2P\""
+par SimpleNet.mta_Server_RS.ppp$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.mta_Server_RS.ppp$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.mta_Server_RS.ppp$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.mta_Server_RS.ppp$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.mta_Server_RS.ppp$o[1].channel per 0
+attr mutable ""
+par SimpleNet.mailbox.ppp$o[0].channel typename "\"project.P2P\""
+par SimpleNet.mailbox.ppp$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.mailbox.ppp$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.mailbox.ppp$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.mailbox.ppp$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.mailbox.ppp$o[0].channel per 0
+attr mutable ""
+par SimpleNet.mailbox.ppp$o[1].channel typename "\"project.P2P\""
+par SimpleNet.mailbox.ppp$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.mailbox.ppp$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.mailbox.ppp$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.mailbox.ppp$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.mailbox.ppp$o[1].channel per 0
+attr mutable ""
+par SimpleNet.maa_Server.ppp$o[0].channel typename "\"project.P2P\""
+par SimpleNet.maa_Server.ppp$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.maa_Server.ppp$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.maa_Server.ppp$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.maa_Server.ppp$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.maa_Server.ppp$o[0].channel per 0
+attr mutable ""
+par SimpleNet.maa_Server.ppp$o[1].channel typename "\"project.P2P\""
+par SimpleNet.maa_Server.ppp$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.maa_Server.ppp$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.maa_Server.ppp$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.maa_Server.ppp$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.maa_Server.ppp$o[1].channel per 0
+attr mutable ""
+par SimpleNet.maa_Client.ppp$o[0].channel typename "\"project.P2P\""
+par SimpleNet.maa_Client.ppp$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.maa_Client.ppp$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.maa_Client.ppp$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.maa_Client.ppp$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.maa_Client.ppp$o[0].channel per 0
+attr mutable ""
+par SimpleNet.maa_Client.ppp$o[1].channel typename "\"project.P2P\""
+par SimpleNet.maa_Client.ppp$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.maa_Client.ppp$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.maa_Client.ppp$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.maa_Client.ppp$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.maa_Client.ppp$o[1].channel per 0
+attr mutable ""
+par SimpleNet.router2.pppg$o[2].channel typename "\"project.P2P\""
+par SimpleNet.router2.pppg$o[2].channel disabled false
+attr mutable ""
+par SimpleNet.router2.pppg$o[2].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.router2.pppg$o[2].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.router2.pppg$o[2].channel ber 0
+attr mutable ""
+par SimpleNet.router2.pppg$o[2].channel per 0
+attr mutable ""
+par SimpleNet.sender.ppp$o.channel typename "\"project.P2P\""
+par SimpleNet.sender.ppp$o.channel disabled false
+attr mutable ""
+par SimpleNet.sender.ppp$o.channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.sender.ppp$o.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.sender.ppp$o.channel ber 0
+attr mutable ""
+par SimpleNet.sender.ppp$o.channel per 0
+attr mutable ""
+par SimpleNet.router1.pppg$o[0].channel typename "\"project.P2P\""
+par SimpleNet.router1.pppg$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.router1.pppg$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.router1.pppg$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.router1.pppg$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.router1.pppg$o[0].channel per 0
+attr mutable ""
+par SimpleNet.router1.pppg$o[1].channel typename "\"project.P2P\""
+par SimpleNet.router1.pppg$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.router1.pppg$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.router1.pppg$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.router1.pppg$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.router1.pppg$o[1].channel per 0
+attr mutable ""
+par SimpleNet.dns1.ppp$o.channel typename "\"project.P2P\""
+par SimpleNet.dns1.ppp$o.channel disabled false
+attr mutable ""
+par SimpleNet.dns1.ppp$o.channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.dns1.ppp$o.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.dns1.ppp$o.channel ber 0
+attr mutable ""
+par SimpleNet.dns1.ppp$o.channel per 0
+attr mutable ""
+par SimpleNet.mta_Client_S.ppp$o[0].channel typename "\"project.P2P\""
+par SimpleNet.mta_Client_S.ppp$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.mta_Client_S.ppp$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.mta_Client_S.ppp$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.mta_Client_S.ppp$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.mta_Client_S.ppp$o[0].channel per 0
+attr mutable ""
+par SimpleNet.router1.pppg$o[2].channel typename "\"project.P2P\""
+par SimpleNet.router1.pppg$o[2].channel disabled false
+attr mutable ""
+par SimpleNet.router1.pppg$o[2].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.router1.pppg$o[2].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.router1.pppg$o[2].channel ber 0
+attr mutable ""
+par SimpleNet.router1.pppg$o[2].channel per 0
+attr mutable ""
+par SimpleNet.receiver.ppp$o.channel typename "\"project.P2P\""
+par SimpleNet.receiver.ppp$o.channel disabled false
+attr mutable ""
+par SimpleNet.receiver.ppp$o.channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.receiver.ppp$o.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.receiver.ppp$o.channel ber 0
+attr mutable ""
+par SimpleNet.receiver.ppp$o.channel per 0
+attr mutable ""
+par SimpleNet.router2.pppg$o[0].channel typename "\"project.P2P\""
+par SimpleNet.router2.pppg$o[0].channel disabled false
+attr mutable ""
+par SimpleNet.router2.pppg$o[0].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.router2.pppg$o[0].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.router2.pppg$o[0].channel ber 0
+attr mutable ""
+par SimpleNet.router2.pppg$o[0].channel per 0
+attr mutable ""
+par SimpleNet.router2.pppg$o[1].channel typename "\"project.P2P\""
+par SimpleNet.router2.pppg$o[1].channel disabled false
+attr mutable ""
+par SimpleNet.router2.pppg$o[1].channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.router2.pppg$o[1].channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.router2.pppg$o[1].channel ber 0
+attr mutable ""
+par SimpleNet.router2.pppg$o[1].channel per 0
+attr mutable ""
+par SimpleNet.dns2.ppp$o.channel typename "\"project.P2P\""
+par SimpleNet.dns2.ppp$o.channel disabled false
+attr mutable ""
+par SimpleNet.dns2.ppp$o.channel delay 0.0002s
+attr mutable ""
+attr unit s
+par SimpleNet.dns2.ppp$o.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par SimpleNet.dns2.ppp$o.channel ber 0
+attr mutable ""
+par SimpleNet.dns2.ppp$o.channel per 0
+attr mutable ""
+par SimpleNet.spool typename "\"project.spool\""
+par SimpleNet.spool address 400
+par SimpleNet.mta_Client_SS typename "\"project.MTA_Client_SS\""
+par SimpleNet.mta_Client_SS address 500
+par SimpleNet.mta_Client_SS useCertificates true
+par SimpleNet.router typename "\"project.Router\""
+par SimpleNet.router routes "\"550:0, 500:0, 400:0, 300:0, 200:0, 650:1, 600:2, 700:2, 800:2, 810:2, 950:3\""
+par SimpleNet.router enableAttack false
+par SimpleNet.router attackCmd "\"\""
+par SimpleNet.dns typename "\"project.DNS\""
+par SimpleNet.dns address 650
+par SimpleNet.dns answerAddr 3
+par SimpleNet.mta_Server_RS typename "\"project.MTA_Server_RS\""
+par SimpleNet.mta_Server_RS address 600
+par SimpleNet.mta_Server_RS maxMessageSizeBytes 2000000
+par SimpleNet.mta_Server_RS useCertificates true
+par SimpleNet.mailbox typename "\"project.mailbox\""
+par SimpleNet.mailbox address 700
+par SimpleNet.maa_Server typename "\"project.MAA_Server\""
+par SimpleNet.maa_Server address 800
+par SimpleNet.maa_Client typename "\"project.MAA_Client\""
+par SimpleNet.maa_Client address 810
+par SimpleNet.maa_Client receiverAddr 850
+par SimpleNet.receiver typename "\"project.Receiver\""
+par SimpleNet.receiver address 850
+par SimpleNet.receiver dnsAddr 860
+par SimpleNet.sender typename "\"project.Sender\""
+par SimpleNet.sender address 100
+par SimpleNet.sender message "\"Test email message\""
+par SimpleNet.sender mail_from "\"alice@sender.com\""
+par SimpleNet.sender mail_to "\"bob@receiver.com\""
+par SimpleNet.sender mail_subject "\"Test Email - Security Demonstration\""
+par SimpleNet.sender mail_body "\"This is a test email to demonstrate the Man-in-the-Middle attack and its prevention using certificates.\""
+par SimpleNet.mta_Client_S typename "\"project.MTA_Client_S\""
+par SimpleNet.mta_Client_S address 200
+par SimpleNet.mta_Server_S typename "\"project.MTA_Server_S\""
+par SimpleNet.mta_Server_S address 300
+par SimpleNet.router1 typename "\"project.Router\""
+par SimpleNet.router1 routes "\"100:0, 150:1, 200:2\""
+par SimpleNet.router1 enableAttack false
+par SimpleNet.router1 attackCmd "\"\""
+par SimpleNet.router2 typename "\"project.Router\""
+par SimpleNet.router2 routes "\"850:0, 860:1, 810:2, 800:2, 700:2, 600:2\""
+par SimpleNet.router2 enableAttack false
+par SimpleNet.router2 attackCmd "\"\""
+par SimpleNet.dns1 typename "\"project.DNS\""
+par SimpleNet.dns1 address 150
+par SimpleNet.dns1 answerAddr 200
+par SimpleNet.dns2 typename "\"project.DNS\""
+par SimpleNet.dns2 address 860
+par SimpleNet.dns2 answerAddr 810
+par SimpleNet.sniffer typename "\"project.MaliciousSniffer\""
+par SimpleNet.ca typename "\"project.CA\""
+par SimpleNet.ca address 950
+par SimpleNet.ca enabled true
+par SimpleNet.ca certificateValidityPeriod 3600s
+attr unit s
+par SimpleNet typename "\"project.SimpleNet\""
+

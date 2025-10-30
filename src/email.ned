@@ -15,7 +15,7 @@ simple Router
         string attackCmd = default("");
         @display("i=device/router");
     gates:
-        inout pppg[3];                 // <-- fixed-size vector gate (0..2)
+        inout pppg[4] @loose;          // @loose allows unconnected gates (router1/router2 only use 3)
 }
 
 //
@@ -26,7 +26,8 @@ simple MTA_Server_RS
     parameters:
         int address;
         int maxMessageSizeBytes = default(2000000);
-    @display("i=device/server2,,0");
+        bool useCertificates = default(false);  // Enable certificate-based authentication
+        @display("i=device/server2,,0");
     gates:
         inout ppp[2];
 }
@@ -38,7 +39,8 @@ simple MTA_Client_SS
 {
     parameters:
         int address;
-    @display("i=device/server2,,0");
+        bool useCertificates = default(false);  // Enable certificate-based authentication
+        @display("i=device/server2,,0");
     gates:
         inout ppp[2];
 }
@@ -50,7 +52,7 @@ simple MAA_Server
 {
     parameters:
         int address;
-    @display("i=abstract/server,,0");
+        @display("i=abstract/server,,0");
     gates:
         inout ppp[2];
 }
@@ -62,7 +64,8 @@ simple MAA_Client
 {
     parameters:
         int address;
-    @display("i=abstract/server,,0");
+        int receiverAddr = default(850);
+        @display("i=abstract/server,,0");
     gates:
         inout ppp[2];
 }
@@ -74,7 +77,7 @@ simple spool
 {
     parameters:
         int address;
-    @display("i=block/queue,,0");
+        @display("i=block/queue,,0");
     gates:
         inout ppp[2];
 }
@@ -86,7 +89,7 @@ simple mailbox
 {
     parameters:
         int address;
-    @display("i=old/mailbox,,0");
+        @display("i=old/mailbox,,0");
     gates:
         inout ppp[2];
 }
@@ -105,7 +108,7 @@ simple Sender
         string mail_to = default("bob@example.com");
         string mail_subject = default("Greetings");
         string mail_body = default("This is the body.");
-    @display("i=device/laptop,,0");
+        @display("i=device/laptop,,0");
     gates:
         inout ppp;
 }
@@ -117,7 +120,8 @@ simple Receiver
 {
     parameters:
         int address;
-    @display("i=device/pc,,0");
+        int dnsAddr = default(950);
+        @display("i=device/pc,,0");
     gates:
         inout ppp;
 }
@@ -150,7 +154,7 @@ simple MTA_Client_S
 {
     parameters:
         int address;
-    @display("i=old/server1,,0");
+        @display("i=old/server1,,0");
     gates:
         inout ppp[2];
 }
@@ -162,9 +166,33 @@ simple MTA_Server_S
 {
     parameters:
         int address;
-    @display("i=old/server1,,0");
+        @display("i=old/server1,,0");
     gates:
         inout ppp[2];
+}
+
+//
+// Malicious Sniffer - intercepts and decrypts traffic
+//
+simple MaliciousSniffer
+{
+    @display("i=block/segm,red");
+    gates:
+        inout ppp[2];
+}
+
+//
+// Certificate Authority - issues and signs certificates
+//
+simple CA
+{
+    parameters:
+        int address;
+        bool enabled = default(false);  // Can be enabled/disabled per scenario
+        double certificateValidityPeriod @unit(s) = default(3600s);
+        @display("i=block/control,green");
+    gates:
+        inout ppp;
 }
 
 network SimpleNet
@@ -219,13 +247,26 @@ network SimpleNet
         dns2: DNS {
             @display("p=951,210");
         }
+        // MALICIOUS SNIFFER - positioned between mta_Client_SS and router
+        sniffer: MaliciousSniffer {
+            @display("p=500,458");
+        }
+        // CERTIFICATE AUTHORITY - issues certificates (initially inactive)
+        ca: CA {
+            address = 950;
+            @display("p=692,347");
+        }
     connections:
         mta_Client_S.ppp[1] <--> P2P <--> mta_Server_S.ppp[0];
         mta_Server_S.ppp[1] <--> P2P <--> spool.ppp[0];
         spool.ppp[1] <--> P2P <--> mta_Client_SS.ppp[0];
-        mta_Client_SS.ppp[1] <--> P2P <--> router.pppg[0];
+        // INSERT SNIFFER HERE - intercepts traffic between mta_Client_SS and router
+        mta_Client_SS.ppp[1] <--> P2P <--> sniffer.ppp[0];
+        sniffer.ppp[1] <--> P2P <--> router.pppg[0];
         router.pppg[1] <--> P2P <--> dns.ppp;
         router.pppg[2] <--> P2P <--> mta_Server_RS.ppp[0];
+        // Connect CA to router for certificate distribution
+        ca.ppp <--> P2P <--> router.pppg[3];
         mta_Server_RS.ppp[1] <--> P2P <--> mailbox.ppp[0];
         mailbox.ppp[1] <--> P2P <--> maa_Server.ppp[0];
         maa_Server.ppp[1] <--> P2P <--> maa_Client.ppp[0];

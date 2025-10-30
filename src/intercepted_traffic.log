@@ -1,0 +1,8 @@
+============================================================
+    MALICIOUS SNIFFER (Man-in-the-Middle) ACTIVATED        
+============================================================
+Attack Type: Man-in-the-Middle on DH + RSA Key Exchange
+Position: Between Sender (mta_Client_SS) and Receiver (mta_Server_RS)
+Simulation Start Time: 0
+============================================================
+
