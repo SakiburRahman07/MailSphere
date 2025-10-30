@@ -37,38 +37,10 @@ Time: 0.0148272 seconds
 From: Sender
 SMTP Command: EHLO
 
-[MITM - SMTP INTERCEPTION]
-Time: 0.0161232 seconds
-From: Sender
-SMTP Command: MAIL
-DECRYPTED FROM: alice@sender.com
-Message re-encrypted and forwarded to Receiver
-
-[MITM - SMTP INTERCEPTION]
-Time: 0.0174192 seconds
-From: Sender
-SMTP Command: RCPT
-DECRYPTED TO: bob@receiver.com
-Message re-encrypted and forwarded to Receiver
-
-[MITM - SMTP INTERCEPTION]
-Time: 0.0187152 seconds
-From: Sender
-SMTP Command: DATA
-
-[MITM - SMTP INTERCEPTION]
-Time: 0.0200112 seconds
-From: Sender
-SMTP Command: DATA_END
-DECRYPTED SUBJECT: Test Email - Security Demonstration
-DECRYPTED BODY: This is a test email to demonstrate the Man-in-the-Middle attack and its prevention using certificates.
-DECRYPTED CONTENT: Test email message
-Message re-encrypted and forwarded to Receiver
-
 ============================================================
            MITM ATTACK SUMMARY                              
 ============================================================
-Total packets intercepted: 14
+Total packets intercepted: 6
 MITM Active: YES - ATTACK SUCCESSFUL
 
 Two separate sessions established:
